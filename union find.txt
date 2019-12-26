@@ -1,0 +1,27 @@
+ll find(ll x, ll par[])
+{
+    if(x == par[x])
+        return x;
+    return find(par[x], par);
+}
+ 
+void unio(ll x, ll y, ll par[], ll rank[], ll siz[])
+{
+    x = find(x,par);
+    y = find(y,par);
+    if(x == y)
+        return;
+    if(rank[x]>rank[y])
+    {
+        siz[x]+=siz[y];
+        rank[x] = max(rank[x], rank[y] + 1);
+        par[y] = x;
+    }
+    
+    else
+    {
+        siz[y]+=siz[x];
+        rank[y] = max(rank[y], rank[x] + 1);
+        par[x] = y;
+    }
+}

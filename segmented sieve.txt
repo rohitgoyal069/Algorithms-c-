@@ -1,0 +1,86 @@
+vector<ll> prime;
+#define N 1000005
+
+void sieve()
+{
+    bool mark[N];
+    memset(mark,0,sizeof(mark));
+    
+    mark[2] = 0;
+    for(ll i=2;i<N;i++)
+    {
+        if(mark[i])
+            continue;
+        for(ll j=i*i;j<N;j+=i)
+            mark[j] = 1;
+    }
+    
+    for(ll i=2;i<N;i++)
+        if(mark[i] == 0)
+            prime.pb(i);
+}
+
+ll solve(ll a, ll b)
+{
+    ll ben = a;
+    a-=a;
+    b-=ben;
+    
+    ll siz = b+1;
+    
+    unordered_map<ll,ll> ma[siz];
+    ll val[siz];
+    for(ll i=0;i<siz;i++)
+        val[i] = ben+i;
+    //vector<ll> prime;
+    ll no = sqrt(ben+b) + 2;
+    
+    for(ll i=0;i<prime.size();i++)
+    {
+        if(prime[i]>no)
+            break;
+        ll st = (ben)/prime[i];
+        if(st*prime[i] < ben)
+            st++;
+        st*=prime[i];
+        for(ll j=st;j<=ben+b;j+=prime[i])
+        {
+            while(val[j-ben]%prime[i] == 0)
+            {
+                val[j-ben]/=prime[i];
+                ma[j-ben][prime[i]]+=1;
+            }
+        }
+    }
+    
+    for(ll j=0;j<siz;j++)
+    {
+        if(val[j]!=1)
+            ma[j][val[j]]++;
+    }
+    
+    ll ans = 0;
+    
+    for(ll i=0;i<siz;i++)
+    {
+        if(ma[i].size() == 1)
+        {
+            ans+=1;
+            continue;
+        }
+        //cout<<"for "<<i+ben<<" prime factors = "<<ma[i].size()<<"\n";
+        ll mini = ma[i].begin()->second;
+        ll curr = 1;
+        for(auto it = ma[i].begin();it!=ma[i].end();it++)
+        {
+            //cout<<"freq of "<<it->first<<" = "<<it->second<<"\n";
+            mini = min(mini,it->second);
+            curr*=(it->second + 1);
+        }
+        ans+=curr/(mini+1);
+        //cout<<"curr = "<<curr<<" and "<<"mini = "<<mini<<"\n";
+    }
+    
+    return ans;
+    
+}

@@ -1,0 +1,13 @@
+ll powa(ll a, ll b, ll c)
+{
+    a%=c;
+    ll res = 1;
+    while(b>0)
+    {
+        if(b&1)
+            res*=a, res%=c;
+        a*=a, a%=c;
+        b>>=1;
+    }
+    return res;
+}

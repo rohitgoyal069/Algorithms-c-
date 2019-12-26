@@ -1,0 +1,59 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define INF 1000000000000
+
+using namespace std;
+
+struct line
+{
+    mutable ll m,c, ran;
+    
+    line(ll a, ll b, ll c):m(a),c(b),ran(c){}
+    
+    bool operator<(const line& o) const { return m < o.m; }
+    bool operator<(ll x) const { return ran < x; }};
+
+multiset<line,less<>> ms;
+
+ll divi(ll a, ll b)
+{
+    return (a/b) - (a^b<0 && a%b);
+}
+
+bool inter(multiset<line> :: iterator a, multiset<line> :: iterator b)
+{
+    if(b == ms.end())
+    {
+        a->ran = INF;
+        return 0;
+    }
+    
+    if(a->m == b->m)
+        a->ran = (a->c>b->c)?INF:-INF;
+    else a->ran = divi(a->c - b->c, b->m - a->m);
+    
+    return a->ran>=b->ran;
+}
+
+void add(ll m, ll c)
+{
+    auto z = ms.insert(line(m,c,0));
+    auto y = z++;
+    auto x = y;
+    
+    while(inter(y,z))
+        z = ms.erase(z);   
+    if(x!=ms.begin() && inter(--x,y))
+        inter(x,y=ms.erase(y));
+    while((y=x)!=ms.begin() && (--x)->ran>=y->ran)
+        inter(x,ms.erase(y));
+}
+
+ll query(ll x)
+{
+    auto l = *ms.lower_bound(x);
+    return l.m*x + l.c;
+    
+}

@@ -1,0 +1,40 @@
+ll prim(vector<pair<ll,ll>> v[], ll n)
+{
+bool vis[n];
+memset(vis,0,sizeof(vis));
+//vis[0] = 1;
+set<pair<ll,ll>> st;
+st.insert(mp(0,0));
+for(ll i=1;i<n;i++)
+st.insert(mp(LLONG_MAX,i));
+ll vali[n];
+vali[0] = 0;
+for(ll i=1;i<n;i++)
+vali[i] = LLONG_MAX;
+ll cnt = 0;
+while(st.size()>0)
+{
+auto curr = *st.begin();
+st.erase(st.begin());
+vis[curr.second] = 1;
+cnt++;
+
+    for(auto it = v[curr.second].begin();it!=v[curr.second].end();it++)
+    {
+        if(vis[it->second])
+            continue;
+        ll v1 = it->first;
+        if(v1<vali[it->second])
+        {
+            st.erase(mp(vali[it->second],it->second));
+            vali[it->second] = v1;
+            st.insert(mp(v1,it->second));
+        }
+    }
+}
+
+ll ans = 0;
+for(ll i=0;i<n;i++)
+    ans+=vali[i];
+return ans;    
+}

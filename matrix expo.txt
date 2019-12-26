@@ -1,0 +1,42 @@
+#define N 7
+
+void mul(ll res[N][N], ll m1[N][N], ll m2[N][N])
+{
+    ll temp[N][N];
+    memset(temp,0,sizeof(temp));
+    for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            for(ll k=0;k<N;k++)
+            {
+                temp[i][j]+=(m1[i][k]*m2[k][j])%MOD;
+                temp[i][j]%=MOD;
+            }
+    for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            res[i][j] = temp[i][j];
+                
+}
+
+void powa(ll mat[N][N], ll n)
+{
+   ll res[N][N];
+   memset(res,0,sizeof(res));
+   for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            if(i == j)
+                res[i][j] = 1;
+   
+   while(n>0)
+   {
+       if(n%2 == 1)
+           mul(res,res,mat);
+       
+       n>>=1;
+       mul(mat,mat,mat);
+   }
+   
+   for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            mat[i][j] = res[i][j];
+    
+}

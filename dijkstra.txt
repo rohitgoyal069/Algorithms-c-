@@ -1,0 +1,28 @@
+ld dijk(vector<pair<ll,ld>> v[], ll n, ll x, ll y)
+{
+    set<pair<ld,ll>> st;
+    vector<ld> dis(n,INF);
+    
+    st.insert(mp(0,x));
+    dis[x] = 0;
+    
+    while(st.size() > 0)
+    {
+        ll temp = st.begin()->second;
+        st.erase(st.begin());
+        
+        for(auto it = v[temp].begin();it!=v[temp].end();it++)
+        {
+            ll v1 = it->first;
+            ld wt = it->second;
+            
+            if(dis[v1]>dis[temp] + wt)
+            {
+                dis[v1] = dis[temp] + wt;
+                st.insert(mp(dis[v1],v1));
+            }
+        }
+    }
+    
+    return dis[y];
+}

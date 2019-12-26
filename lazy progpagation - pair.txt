@@ -1,0 +1,74 @@
+void upd(pair<ll,ll> st[],ll lazy[], ll l, ll r, ll i, ll l1, ll r1, ll val)
+{
+    if (lazy[i] != 0) 
+    { 
+        
+        st[i].first+=lazy[i], st[i].second+=lazy[i];
+  
+        if (l != r) 
+        { 
+            lazy[i*2 + 1]   += lazy[i]; 
+            lazy[i*2 + 2]   += lazy[i]; 
+        } 
+  
+        lazy[i] = 0; 
+    } 
+  
+    if (l>r || l>r1 || r<l1) 
+        return ; 
+  
+    if (l>=l1 && r<=r1) 
+    { 
+        st[i].first += val, st[i].second+=val; 
+  
+        if (l != r) 
+        { 
+            lazy[i*2 + 1]   += val; 
+            lazy[i*2 + 2]   += val; 
+        } 
+        return; 
+    } 
+ 
+    ll mid = (l+r)/2; 
+    upd(st,lazy, l, mid, 2*i+1, l1, r1, val); 
+    upd(st,lazy, mid+1, r, 2*i+2, l1, r1, val); 
+  
+    st[i].first = min(st[2*i+1].first , st[2*i+2].first);
+    st[i].second = max(st[2*i+1].second , st[2*i+2].second);    
+    
+}
+ 
+pair<ll,ll> quer(pair<ll,ll> st[],ll lazy[], ll l, ll r, ll i, ll l1, ll r1)
+{
+    if (lazy[i] != 0) 
+    { 
+        
+        st[i].first+=lazy[i], st[i].second+=lazy[i];
+  
+        if (l != r) 
+        { 
+            lazy[i*2 + 1]   += lazy[i]; 
+            lazy[i*2 + 2]   += lazy[i]; 
+        } 
+  
+        lazy[i] = 0; 
+    }
+  
+    if (l>r || l>r1 || r<l1) 
+        return mp(100000000, -10000000); 
+    
+    if(l1<=l && r1>=r)
+        return st[i];
+    
+    if(l == r)
+        return st[i];
+ 
+    ll mid = (l+r)/2; 
+    pair<ll,ll> p1 = quer(st,lazy, l, mid,2*i+1, l1, r1); 
+    pair<ll,ll> p2 = quer(st,lazy, mid+1, r,2*i+2, l1, r1); 
+    
+    pair<ll,ll> p;
+    p.first = min(p1.first , p2.first);
+    p.second = max(p1.second , p2.second);    
+    return p;
+}

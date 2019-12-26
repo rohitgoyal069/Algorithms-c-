@@ -1,0 +1,49 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define MOD 1000000007
+
+using namespace std;
+
+int main()
+{
+   FAST/**/
+   
+   ll t;
+   cin>>t;
+   while(t--){
+   
+   ll n,k;              // k is people, n are candies
+   cin>>k>>n;
+   
+   ll dp[k][n+1];
+   memset(dp,0,sizeof(dp));
+   for(ll j=0;j<=n/k;j++)
+        dp[0][j*k] = 1;
+   
+   for(ll i=1;i<k;i++)
+   {
+       ll temp = (k-i);
+       for(ll j=0;j<=n;j++)
+       {
+           for(ll k1 = 0;k1<=n;k1+=temp)
+           {
+               if(k1+j>n)
+                    continue;
+               dp[i][k1+j]+=dp[i-1][j];
+               dp[i][k1+j]%=MOD;
+           }
+       }
+   }
+   //cout<<dp[1][4]<<"\n";
+   
+   cout<<dp[k-1][n]<<"\n";
+   }
+   
+   
+   
+   return 0;
+}

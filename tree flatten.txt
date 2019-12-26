@@ -1,0 +1,21 @@
+ll start[100005];
+ll endi[100005];
+
+ll flatten(ll curr, vector<ll> v[], vector<ll> &flat)
+{
+    if(curr == 0)
+        start[curr] = 0;
+    
+    flat.emplace_back(curr);
+    ll temp = start[curr];
+    for(auto it = v[curr].begin();it!=v[curr].end();it++)
+    {
+        if(start[*it]!=-1)
+            continue;
+        start[*it] = temp + 1;
+        temp = flatten(*it, v, flat);
+    }
+    
+    endi[curr] = temp;
+    return endi[curr];
+}

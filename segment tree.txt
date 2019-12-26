@@ -1,0 +1,27 @@
+ll que(ll st[], ll l, ll r, ll l1, ll r1, ll i)
+{
+    if(l>r1 || l1>r)
+        return 0;
+    if(l>=l1 && r<=r1)
+        return st[i];
+    ll mid = (l+r)/2;
+    
+    return que(st,l,mid,l1,r1,2*i+1)+que(st,mid+1,r,l1,r1,2*i+2);
+}
+ 
+void upd(ll st[], ll l, ll r, ll l1, ll i, ll val)
+{
+    if(l>l1||r<l1)
+        return;
+    if(l == r)
+    {
+        st[i] = val;
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    upd(st,l,mid,l1,2*i+1,val);
+    upd(st,mid+1,r,l1,2*i+2,val);
+    
+    st[i] = st[2*i+1] + st[2*i+2];
+}

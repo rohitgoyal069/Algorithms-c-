@@ -1,0 +1,188 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(n,i) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+ll treee[1000][1000];
+ll arr[1000][1000];
+ll n,m;
+
+void buildc(ll st[],ll arr[], ll l, ll r, ll i)
+{
+    if(l == r)
+    {
+        st[i] = arr[l];
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    buildc(st,arr,l,mid,2*i+1);
+    buildc(st,arr,mid+1,r,2*i+2);
+    
+    st[i] = max(st[2*i+1],st[2*i+2]);
+}
+
+void comb(ll st1[], ll st2[], ll st[], ll l, ll r, ll i)
+{
+    if(l == r)
+    {
+        st[i] = max(st1[i], st2[i]);
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    comb(st1,st2,st,l,mid,2*i+1);
+    comb(st1,st2,st,mid+1,r,2*i+2);
+    
+    
+    st[i] = max(st[2*i+1],st[2*i+2]);
+}
+
+void buildr(ll l, ll r, ll i)
+{
+    if(l == r)
+    {
+        buildc(treee[i],arr[l],0,m-1,0);
+        return;
+    }
+    ll mid = (l+r)/2;
+    buildr(l,mid,2*i+1);
+    buildr(mid+1,r,2*i+2);
+    comb(treee[2*i+1],treee[2*i+2],treee[i],0,m-1,0);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////           QUERY FUNCTIONS
+
+
+ll que1(ll st[], ll l, ll r, ll l1, ll r1, ll i)
+{
+    if(l>r1 || l1>r)
+        return 0;
+    if(l == r)
+        return st[i];
+    if(l1<=l && r1>=r)
+        return st[i];
+    ll mid = (l+r)/2;    
+    return max(que1(st,l,mid,l1,r1,2*i+1), que1(st,mid+1,r,l1,r1,2*i+2));
+}
+
+ll que(ll r1, ll r2, ll c1, ll c2, ll l, ll r, ll i)
+{
+    if(l>r2 || r1>r)
+        return 0;
+    if(l>=r1 && r<=r2)
+        return que1(treee[i],0,m-1,c1,c2,0);
+    ll mid = (l+r)/2;
+    return max(que(r1,r2,c1,c2,l,mid,2*i+1),que(r1,r2,c1,c2,mid+1,r,2*i+2));
+}
+
+ll query(ll r1, ll r2, ll c1, ll c2)                                                   //  CALL QUERY
+{
+    if(r1>r2)
+        swap(r1,r2);
+    if(c1>c2)
+        swap(c1,c2);
+    return que(r1,r2,c1,c2,0,n-1,0);    
+}
+/////////////////////////////////////////////////////////////////////////////           UPDATE FUNCTIONS    
+
+void upd1(ll st[], ll l, ll r, ll l1, ll i, ll val)
+{
+    if(l>l1 || r<l1)
+        return;
+    if(l == r)
+    {
+        st[i] = val;
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    upd1(st,l,mid,l1,2*i+1,val);
+    upd1(st,mid+1,r,l1,2*i+2,val);
+    
+    st[i] = max(st[2*+1],st[2*i+2]);
+}
+
+
+void upd2(ll st1[], ll st2[], ll st[], ll l, ll r, ll i, ll l1)
+{
+    if(l1>r || l1<l)
+        return;
+    
+    if(l == r)
+    {
+        st[i] = max(st1[i], st2[i]);
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    upd2(st1,st2,st,l,mid,2*i+1,l1);
+    upd2(st1,st2,st,mid+1,r,2*i+2,l1);
+    st[i] = max(st[2*i+1],st[2*i+2]);
+}
+
+void upd(ll l, ll r, ll i, ll r1, ll c1, ll val)
+{
+    if(r<r1 || l>r1)
+        return;
+    
+    if(l == r)
+    {
+        upd1(treee[i],0,m-1,c1,0,val);
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    upd(l,mid,2*i+1,r1,c1,val);
+    upd(mid+1,r,2*i+2,r1,c1,val);
+    
+    upd2(treee[2*i+1],treee[2*i+2],treee[i],0,m-1,0,c1);
+}
+
+void update(ll r1, ll c1, ll val)                                                   //    CALL UPDATE
+{
+    upd(0,n-1,0,r1,c1,val);
+}
+
+/////////////////////////////////////////////////////////////////////////////       
+
+
+
+int main()
+{
+   FAST/**/
+   memset(treee,0,sizeof(treee));
+   
+   cin>>n>>m;
+   
+   repi(n,i)
+        repi(n,j)
+            cin>>arr[i][j];
+   
+   buildr(0,n-1,0);
+   
+   cout<<query(1,2,1,3)<<"\n";
+   update(3,3,17);
+   cout<<query(3,3,3,3)<<"\n";
+   
+   return 0;        
+}  
+   

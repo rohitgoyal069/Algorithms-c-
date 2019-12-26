@@ -1,0 +1,27 @@
+void upd(ll i, ll n, ll ft[], ll val)
+{
+    if(i<0)
+        return;
+    if(i>=n)
+        return;
+    i++;
+    while(i<=n)
+    {
+        ft[i]+=val;
+        i+=(i&(-i));
+    }
+}
+
+ll sum(ll i, ll ft[])
+{
+    if(i<0)
+        return 0;
+    i++;
+    ll ans = 0;
+    while(i>0)
+    {
+        ans+=ft[i];
+        i-=(i&(-i));
+    }
+    return ans;
+}
