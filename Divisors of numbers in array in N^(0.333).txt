@@ -1,0 +1,114 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+#define MAXN 100005
+ll spf[MAXN];
+
+void sieve() 
+{ 
+    spf[1] = 1; 
+    for (ll i=2; i<MAXN; i++) 
+        spf[i] = i; 
+    for (ll i=4; i<MAXN; i+=2) 
+        spf[i] = 2; 
+  
+    for (ll i=3; i*i<MAXN; i++) 
+    { 
+        if (spf[i] == i) 
+        {
+            for (ll j=i*i; j<MAXN; j+=i)
+                if (spf[j]==j) 
+                    spf[j] = i; 
+        } 
+    } 
+} 
+
+void formit(ll curr, ll i, vector<pair<ll,ll>> &v, vector<ll> &temp)
+{
+    if(i == v.size())
+    {
+        temp.pb(curr);
+        return;
+    }
+    ll mul = 1;
+    for(ll j=0;j<=v[i].ss;j++)
+        formit(curr*mul,i+1,v,temp), mul*=v[i].ff;
+}
+
+void gdiv(ll arr[], ll n, vector<ll> divi[])
+{
+    for(ll i=0;i<n;i++)
+    {
+        vector<ll> temp;
+        if(arr[i] == 1)
+        {
+            temp.pb(1);
+            divi[i] = temp;
+            continue;
+        }
+        map<ll,ll> ma;
+            
+        ll curr = arr[i];
+        while(curr>1)
+        {
+            temp.pb(spf[curr]);
+            curr/=spf[curr];
+        }
+        
+        repi(j,temp.size())
+            ma[temp[j]]++;
+        vector<pair<ll,ll>> fin;
+        autoit(ma,it)
+            fin.pb(mp(it->ff,it->ss));
+        
+        formit(1,0,fin,divi[i]);
+    }
+}
+
+int main()
+{
+   FAST/**/
+   
+   sieve();
+   
+   ll n;
+   cin>>n;
+   ll arr[n];
+   
+   rep(n)
+        cin>>arr[i];
+   
+   vector<ll> divi[n];   
+   gdiv(arr,n,divi);
+   
+   /*rep(n)
+   {
+       cout<<"divisors of "<<arr[i]<<" = ";
+       autoit(divi[i],it)
+            cout<<*it<<" ";
+       cout<<"\n";        
+       
+   }*/
+   
+   return 0;        
+}  
+   
