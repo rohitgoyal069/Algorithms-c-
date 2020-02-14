@@ -1,0 +1,50 @@
+enum Color {WHITE, GRAY, BLACK};
+ 
+bool DFSUtil(ll u, ll color[], vector<ll> adj[]) 
+{ 
+    // GRAY :  This vertex is being processed (DFS 
+    //         for this vertex has started, but not 
+    //         ended (or this vertex is in function 
+    //         call stack) 
+    color[u] = GRAY; 
+  
+    // Iterate through all adjacent vertices 
+    
+    for (auto i = adj[u].begin(); i != adj[u].end(); ++i) 
+    { 
+        ll v = *i;  // An adjacent of u 
+  
+        // If there is 
+        if (color[v] == GRAY) 
+          return true; 
+  
+        // If v is not processed and there is a back 
+        // edge in subtree rooted with v 
+        if (color[v] == WHITE && DFSUtil(v, color,adj)) 
+          return true; 
+    } 
+  
+    // Mark this vertex as processed 
+    color[u] = BLACK; 
+  
+    return false; 
+} 
+  
+// Returns true if there is a cycle in graph 
+bool isCyclic(ll V, vector<ll> v[]) 
+{ 
+    // Initialize color of all vertices as WHITE 
+    ll *color = new ll[V]; 
+    for (ll i = 0; i < V; i++) 
+        color[i] = WHITE; 
+  
+    // Do a DFS traversal beginning with all 
+    // vertices 
+    for (ll i = 0; i < V; i++) 
+        if (color[i] == WHITE) 
+           if (DFSUtil(i, color,v) == true) 
+              return true; 
+  
+    return false; 
+} 
+ 
