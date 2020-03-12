@@ -1,0 +1,142 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef int ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define bpc(x) __builtin_parityll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+#define N 2700100
+#define N1 2700
+struct node
+{
+    ll cnt = 0;
+    ll l = -1,r = -1;
+};
+
+ll id = 0;
+ll powa[64];
+
+void add(ll bit,node &root,ll val,node memo[])
+{
+    //cout<<"for "<<val<<" at "<<bit<<"\n";
+    root.cnt++;
+    if(bit == 0)
+        return;
+    
+    if(val&powa[bit-1])
+    {
+        if(root.r == -1)
+            root.r = (id++); 
+        add(bit-1,memo[root.r],val,memo);
+    }
+    
+    else
+    {
+        if(root.l == -1)
+            root.l = (id++);
+        add(bit-1,memo[root.l],val,memo);    
+    }
+}
+
+void remove(ll bit,node &root, ll val,node memo[])
+{
+    
+    root.cnt--;
+    if(bit == 0)
+        return;
+    
+    if(val&powa[bit-1])
+        remove(bit-1,memo[root.r],val,memo);
+    
+    else
+        remove(bit-1,memo[root.l],val,memo);
+}
+
+ll que(ll bit, node &root, ll p, ll l,node memo[])
+{
+    if(bit == 0)
+        return 0;
+    ll ans = 0;
+    ll b1 = ((p&powa[bit-1])>0);
+    ll b2 = ((l&powa[bit-1])>0);
+    
+    repi(bt,2)
+    {
+        ll t1 = (b1^bt);
+        ll t2 = b2;
+        if(t1<t2)
+        {
+            if(bt == 0 && root.l!=-1)
+                ans+=memo[root.l].cnt;
+            else if(bt == 1 && root.r!=-1)
+                ans+=memo[root.r].cnt;
+        }
+        
+        else if(t1 == t2)
+        {
+            if(bt == 0 && root.l!=-1)
+                ans+=que(bit-1,memo[root.l],p,l,memo);
+            else if(bt == 1 && root.r!=-1)
+                ans+=que(bit-1,memo[root.r],p,l,memo);
+        }
+    }
+    return ans;
+}
+
+int main()
+{
+   FAST/**/
+   
+   powa[0] = 1;
+   for(ll i=1;i<64;i++)
+        powa[i] = powa[i-1]*2;
+   
+   ll q;
+   cin>>q;
+   
+   node memo[27*q+100];
+   
+   ll root = (id++);
+   
+   while(q--)
+   {
+       ll t;
+       cin>>t;
+       
+       if(t == 1)
+       {
+           ll p;cin>>p;
+           add(27,memo[root],p,memo);
+       }
+       
+       else if(t == 2)
+       {
+           ll p;cin>>p;
+           remove(27,memo[root],p,memo);
+       }
+       else
+       {
+           ll p,l;cin>>p>>l;
+           cout<<que(27,memo[root],p,l,memo)<<"\n";
+       }
+   }
+   
+   
+   return 0;        
+}  
+   
