@@ -1,6 +1,8 @@
 ll powa(ll a, ll b, ll c)
 {
     a%=c;
+    if(a<0)
+	a+=c;
     ll res = 1;
     while(b>0)
     {

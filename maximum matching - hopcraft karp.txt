@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+bool bfs(vector<ll> v[], ll dis[], ll n, ll m, ll mx[], ll my[])
+{
+    queue<ll> q;
+    
+    for(ll i=1;i<=n;i++)
+    {
+        if(mx[i] == 0)
+            dis[i] = 0, q.push(i);
+        else dis[i] = inf;    
+    }
+    
+    dis[0] = inf;
+    while(q.size()>0)
+    {
+        ll curr = q.front();
+        q.pop();
+        
+        if(dis[curr]<dis[0])
+        {
+            autoit(v[curr],it)
+            {
+                ll temp = my[*it];
+                if(dis[temp] == inf)
+                {
+                    dis[temp] = dis[curr] + 1;
+                    q.push(temp);
+                }
+            }
+        }
+    }
+    
+    return (dis[0]!=inf);
+}
+
+bool dfs(ll curr, vector<ll> v[], ll mx[], ll my[], ll dis[])
+{
+    if(curr == 0)   
+        return 1;
+    
+    autoit(v[curr],it)
+    {
+        if(dis[my[*it]] == dis[curr] + 1 && dfs(my[*it],v,mx,my,dis))
+        {
+            mx[curr] = *it;
+            my[*it] = curr;
+            return 1;
+        }
+    }
+    
+    return 0;
+}
+
+ll maxmatch(vector<ll> v[], ll mx[], ll my[], ll n, ll m)
+{
+    rep(n)
+        mx[i] = 0;
+    rep(m)
+        my[i] = 0;
+    
+    ll dis[n+1];
+    while(bfs(v,dis,n,m,mx,my))
+    {
+        for(ll i=1;i<=n;i++)
+        {
+            if(mx[i] == 0)
+                dfs(i,v,mx,my,dis);
+        }
+    }
+    
+    ll ans = 0;
+    for(ll i=1;i<=n;i++)
+        ans+=(mx[i]!=0);
+    return ans;    
+}

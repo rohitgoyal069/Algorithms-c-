@@ -1,0 +1,197 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 998244353 
+#define inf 1000000000000000
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+ 
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+ 
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+ 
+using namespace std;
+ 
+ll pow2[64];
+ 
+ll powa(ll a, ll b, ll c)
+{
+    a%=c;
+    if(a<0)
+	a+=c;
+    ll res = 1;
+    while(b>0)
+    {
+        if(b&1)
+            res*=a, res%=c;
+        a*=a, a%=c;
+        b>>=1;
+    }
+    return res;
+}
+ 
+ll root = 31;
+ll root_1;
+ll root_pw = (1ll << 23);
+ 
+void fft(vector<ll> & a, bool invert) {
+    ll n = a.size();
+ 
+    for (ll i = 1, j = 0; i < n; i++) {
+        ll bit = n >> 1;
+        for (; j & bit; bit >>= 1)
+            j ^= bit;
+        j ^= bit;
+ 
+        if (i < j)
+            swap(a[i], a[j]);
+    }
+ 
+    for (ll len = 2; len <= n; len <<= 1) {
+        ll wlen = invert ? root_1 : root;
+        for (ll i = len; i < root_pw; i <<= 1)
+            wlen = (ll)(1LL * wlen * wlen % mod);
+ 
+        for (ll i = 0; i < n; i += len) {
+            ll w = 1;
+            for (ll j = 0; j < len / 2; j++) {
+                ll u = a[i+j], v = (ll)(1LL * a[i+j+len/2] * w % mod);
+                a[i+j] = u + v < mod ? u + v : u + v - mod;
+                a[i+j+len/2] = u - v >= 0 ? u - v : u - v + mod;
+                w = (ll)(1LL * w * wlen % mod);
+            }
+        }
+    }
+ 
+    if (invert) {
+        ll n_1 = powa(n,mod-2,mod);
+        for (ll & x : a)
+            x = (ll)(1LL * x * n_1 % mod);
+    }
+}
+ 
+vector<ll> multiply(vector<ll> const& a, vector<ll> const& b) {
+    vector<ll> fa(a.begin(), a.end()), fb(b.begin(), b.end());
+    ll n = 1;
+    while (n < a.size() + b.size()) 
+        n <<= 1;
+    fa.resize(n);
+    fb.resize(n);
+    
+    while(root_pw>n)
+    {
+         root_pw>>=1;
+         root*=root;
+         root%=mod;
+    }
+    //cout<<"root = "<<root<<"\n";
+    root_1 = powa(root,mod-2,mod);
+    
+    fft(fa, false);
+    fft(fb, false);
+    for (ll i = 0; i < n; i++)
+        fa[i] *= fb[i], fa[i]%=mod;
+    fft(fa, true);
+ 
+    while(fa.size()>1 && fa.back() == 0)
+        fa.pop_back();
+    root = 31;
+    root_pw = (1ll << 23);
+    return fa;
+}
+ 
+vector<ll> multiply1(vector<ll> const& a) {
+    vector<ll> fa(a.begin(), a.end());
+    ll n = 1;
+    while (n < 2*((ll)a.size())) 
+        n <<= 1;
+    fa.resize(n);
+    
+    while(root_pw>n)
+    {
+         root_pw>>=1;
+         root*=root;
+         root%=mod;
+    }
+    //cout<<"root = "<<root<<"\n";
+    root_1 = powa(root,mod-2,mod);
+    
+    fft(fa, false);
+    for (ll i = 0; i < n; i++)
+    {
+        fa[i] = (fa[i] * fa[i]); fa[i]%=mod;
+    }
+    fft(fa, true);
+
+    while(fa.size()>1 && fa.back() == 0)
+        fa.pop_back();
+    root = 31;
+    root_pw = (1ll << 23);
+    return fa;
+}
+ 
+ 
+void power(vector<ll> &poly, ll n,vector<ll> &res)
+{
+    res = poly;
+    ll curr = 1;
+    ll lim = log2(n) + 1;
+    ll mul = lim-1;
+    while(curr<n)
+    {
+        res = multiply1(res);
+        curr*=2;
+        if(pow2[mul-1]&n)
+            res = multiply(res,poly), curr++;
+        mul--;    
+    }
+}
+ 
+ 
+int main()
+{
+   FAST/**/
+   
+   //rep(BN)
+   //     inve[i] = powa(i,mod-2,mod);
+   
+   ll n,k;
+   cin>>n>>k;
+   pow2[0] = 1;
+   for(ll i=1;i<64;i++)
+        pow2[i] = pow2[i-1]*2;
+   
+   vector<ll> poly(10,0);
+   rep(k)
+   {
+       ll temp;
+       cin>>temp;
+       
+       poly[temp] = 1;
+   }
+   
+   vector<ll> res;
+   power(poly,n/2,res);
+   
+   ll ans = 0;
+   rep(res.size())
+   {
+      // cout<<"for "<<i<<" = "<<poly[i]<<"\n";
+       ans+=(res[i]*res[i])%mod; 
+       if(ans>=mod)
+            ans-=mod;
+   }
+   
+   cout<<ans;        
+   
+   
+   return 0;        
+}  

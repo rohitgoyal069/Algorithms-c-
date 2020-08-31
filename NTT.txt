@@ -1,0 +1,146 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define inf 1000000000000000
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+ll omeg = 5;
+ll mod = 7340033;
+ll FFTN;
+
+vector<ll> powa;
+
+ll power(ll a, ll b, ll c)
+{
+    a%=c;
+    ll res = 1;
+    while(b>0)
+    {
+        if(b&1)
+            res*=a, res%=c;
+        a*=a, a%=c;
+        b>>=1;
+    }
+    return res;
+}
+
+void init_fft(ll n)
+{
+    FFTN = n;
+    powa.resize(n);
+    omeg = power(omeg,1048576/n,mod);
+    ll prev = 1;
+    for(ll i=0;i<n;i++)
+    {
+        powa[i] = prev;
+        prev*=omeg;
+        prev%=mod;
+    }
+}
+
+void change_fft()
+{
+    ll prev = 1;
+    ll temp = power(omeg,mod-2,mod);
+    for(ll i=0;i<FFTN;i++)
+    {
+        powa[i] = prev;
+        prev*=temp;
+        prev%=mod;
+    }
+}
+
+void fft(vector<ll> &a)
+{
+    ll n = a.size();
+    if(n == 1)
+        return;
+    ll half = (n>>1);
+    vector<ll> even(half), odd(half);
+    rep(n)
+    {
+        if(i&1)
+            odd[i/2] = a[i];
+        else even[i/2] = a[i];    
+    }
+    
+    fft(even);
+    fft(odd);
+    
+    ll deno = FFTN/n;
+    
+    for(ll i=0;i<half;i++)
+    {
+        ll temp = even[i] + (odd[i]*powa[i*deno])%mod;
+        temp%=mod;
+        ll temp1 = even[i] + ((odd[i]*powa[(i+n/2)*deno])%mod);
+        temp1%=mod;
+        a[i] = temp;
+        a[i+half] = temp1;
+    }
+}
+
+void multiply(vector<ll> &a, vector<ll> &b, vector<ll> &res)
+{
+    vector<ll> fa(a.begin(), a.end());
+	vector<ll> fb(b.begin(), b.end());
+    ll n = 1;
+    while(n<2*max((ll)a.size(), (ll)b.size()))
+        n<<=1;
+    fa.resize(n);
+	fb.resize(n);
+	init_fft(n);
+	fft(fa);
+	fft(fb);
+	
+	for(ll i=0;i<n;i++)
+	    fa[i] = (fa[i]*fb[i])%mod;
+    change_fft();
+    fft(fa);
+    
+    ll temp = power(n,mod-2,mod);
+    res.resize(n);
+    
+    for(ll i=0;i<n;i++)
+        res[i] = (temp*fa[i])%mod;
+}
+
+
+int main()
+{
+   FAST/**/
+   
+   vector<ll> a = {100,2,3,4};
+   vector<ll> b = {2, 5, 6, 4};
+   
+   vector<ll> res;
+   multiply(a,b,res);
+   
+   ll lim = res.size();
+   for(ll i=lim-1;i>-1;i--)
+   {
+       if(i>0)
+            cout<<res[i]<<"x^"<<i<<" + ";
+       else cout<<res[i]<<"x^"<<i<<"\n";         
+   }
+   
+   return 0;        
+}  
+          
+
+   

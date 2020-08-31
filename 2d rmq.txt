@@ -1,0 +1,230 @@
+//https://codeforces.com/contest/1301/submission/91223520
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+#define N 510
+#define N1 10
+
+ll n,m;
+ll dp[N][N][4];
+ll maxlen[N][N];
+ll rmq[N1][N][N1][N];
+ll powa[64];
+ll len[N];
+
+ll get(ll x1, ll y1, ll x2, ll y2, ll col)
+{
+    if(x1<0 || x2<0 || y1<0 || y2<0 || x1>=n || x2>=n || y1>=m || y2>=m)
+        return 0;
+    
+    ll tot = dp[x2+1][y2+1][col] - dp[x1][y2+1][col] - dp[x2+1][y1][col] + dp[x1][y1][col];
+    ll vol = (x2-x1+1)*(y2-y1+1);
+    if(vol != tot)
+        return 0;
+    return x2-x1+1;    
+}
+
+void build()
+{
+    for(ll i=0;i<n;i++)
+        for(ll j=0;j<m;j++)
+            rmq[0][i][0][j] = maxlen[i][j];
+    
+    for(ll i=0;i<n;i++)
+        for(ll p2=1;p2<N1;p2++)
+            for(ll j=0;j<m;j++)
+            {
+                ll r = j+powa[p2-1];
+                rmq[0][i][p2][j] = rmq[0][i][p2-1][j];
+                if(r<m)
+                    rmq[0][i][p2][j] = max(rmq[0][i][p2][j],rmq[0][i][p2-1][r]);
+            }
+    
+    for(ll p1=1;p1<N1;p1++)
+        for(ll i=1;i<n;i++)
+            for(ll p2=0;p2<N1;p2++)
+                for(ll j=0;j<m;j++)
+                {
+                    rmq[p1][i][p2][j] = rmq[p1-1][i][p2][j];
+                    ll r = i+powa[p1-1];
+                    if(r<n)
+                        rmq[p1][i][p2][j] = max(rmq[p1][i][p2][j], rmq[p1-1][r][p2][j]);
+                }
+}
+
+ll que(ll x1, ll x2, ll y1, ll y2)
+{
+    if(x1>x2 || y1>y2)
+        return 0;
+    if(x1<0 || x2<0 || y1<0 || y2<0 || x1>=n || x2>=n || y1>=m || y2>=m)
+        return 0;  
+    //cout<<"que at "<<x1+1<<" , "<<x2+1<<" , "<<y1+1<<" , "<<y2+1<<'\n';    
+    ll ans = 0;
+    ll b1 = len[x2-x1+1];
+    ll b2 = len[y2-y1+1];
+    vector<ll> x,y;
+    x.pb(x1);
+    x.pb(x2-powa[b1]+1);
+    y.pb(y1);
+    y.pb(y2-powa[b2]+1);
+    
+    autoit(x,it)
+        autoit(y,it1)
+            ans = max(ans, rmq[b1][*it][b2][*it1]);
+    return ans;        
+}
+
+
+
+int main()
+{
+  FAST/**/
+  
+   memset(dp,0,sizeof(dp));
+   memset(maxlen,0,sizeof(maxlen));
+  
+   powa[0] = 1;
+   for(ll i=1;i<64;i++) 
+        powa[i] = powa[i-1]*2;
+   
+   len[1] = 0;
+   for(ll i=2;i<N;i++)
+   {
+       for(ll j=N1-1;j>-1;j--)
+       {
+           if(powa[j]&i)
+           {
+               len[i] = j;
+               break;
+           }
+       }
+   }
+   
+   ll q;
+   cin>>n>>m>>q;
+   
+   string s[n];
+   rep(n)
+        cin>>s[i];
+   
+   ll arr[n][m];
+   map<char,ll> ma;
+   ma['R'] = 0;
+   ma['G'] = 1;
+   ma['Y'] = 2;
+   ma['B'] = 3;
+   
+   rep(n)
+        repi(j,m)
+            arr[i][j] = ma[s[i][j]];
+   
+   
+   for(ll i=0;i<n;i++)
+   {
+       for(ll j=0;j<m;j++)
+       {
+           for(ll col=0;col<4;col++)
+           {
+               dp[i+1][j+1][col]+=dp[i][j+1][col];
+               dp[i+1][j+1][col]+=dp[i+1][j][col];
+               dp[i+1][j+1][col]-=dp[i][j][col];
+           }
+           dp[i+1][j+1][arr[i][j]]++;
+       }
+   }
+   
+   
+   for(ll i=1;i<n;i++)
+   {
+       for(ll j=1;j<m;j++)
+       {
+           ll start = 1;
+           ll end = min(n,m)/2;
+           ll hi = 0;
+           while(end>=start)
+           {
+               ll mid = (start+end)/2;
+               ll left = j-1-mid+1;
+               ll right = j+mid-1;
+               ll up = i-1-mid+1;
+               ll down = i+mid-1;
+               ll curr = min({get(up,left,i-1,j-1,0),get(up,j,i-1,right,1),get(i,left,down,j-1,2),get(i,j,down,right,3)});
+               if(curr >= mid)
+               {
+                   hi = mid;
+                   start = mid + 1;
+               }
+               
+               else end = mid-1;
+           }
+           
+           maxlen[i][j] = hi;
+           //cout<<"At "<<i+1<<" , "<<j+1<<" = "<<hi<<"\n";
+       }
+   }
+   
+   build();
+   
+   while(q--)
+   {
+       ll x1,y1,x2,y2;
+       cin>>x1>>y1>>x2>>y2;
+       
+       x1--,x2--,y1--,y2--;
+       
+       ll ans = 0;
+       
+       ll start = 1;
+       ll end = min(n,m)/2;
+       
+       while(end>=start)
+       {
+           ll mid = (start+end)/2;
+           ll x11 = x1+mid-1;
+           ll x21 = x2-mid+1;
+           ll y11 = y1+mid-1;
+           ll y21 = y2-mid+1;
+           ll temp = que(x11+1,x21,y11+1,y21);
+           //cout<<"que at "<<x1+1<<" , "<<x2<<" , "<<y1+1<<" , "<<y2<<'\n';
+           if(temp>=mid)
+           {
+               ans = mid;
+               start = mid+1;
+           }
+           
+           else end = mid-1;
+       }
+       
+       cout<<4*ans*ans<<"\n";
+       
+   }
+   
+   
+   
+   
+   return 0;        
+}  
+  
+          
+   

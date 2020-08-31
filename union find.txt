@@ -2,7 +2,7 @@ ll find(ll x, ll par[])
 {
     if(x == par[x])
         return x;
-    return find(par[x], par);
+    return par[x] = find(par[x], par);
 }
  
 void unio(ll x, ll y, ll par[], ll rank[], ll siz[])

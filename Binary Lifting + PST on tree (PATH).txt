@@ -1,0 +1,238 @@
+//https://www.codechef.com/viewsolution/30791639
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+ll ht[100005];
+ll par[18][100005];
+ll val[100005];
+ll powa[64];
+ll addr[100005];
+
+ll low, hi;
+
+ll lca(ll a, ll b)
+{
+    if(a == b)
+        return a;
+    if(ht[a]<ht[b])
+        swap(a,b);
+    for(ll i=17;i>-1;i--)
+    {
+        if(ht[a]-ht[b]>=powa[i])
+            a = par[i][a];
+    }
+    if(a == b)
+        return a;
+    for(ll i=17;i>-1;i--)
+    {
+        if(par[i][a] != par[i][b])
+        {
+            a = par[i][a];
+            b = par[i][b];
+        }
+    }
+    return par[0][a];
+}
+
+void init(vector<ll> v[], ll n)
+{
+    memset(par,-1,sizeof(par));
+    powa[0] = 1;
+    for(ll i=1;i<64;i++)
+        powa[i] = powa[i-1]*2;
+    queue<ll> q;
+    q.push(0);
+    memset(ht,-1,sizeof(ht));
+    ht[0] = 0;
+    while(!q.empty())
+    {
+        ll curr = q.front();
+        q.pop();
+        
+        autoit(v[curr],it)
+        {
+            if(ht[*it]!=-1)
+                continue;
+            ht[*it] = ht[curr] + 1;
+            q.push(*it);
+            par[0][*it] = curr;
+        }
+    }
+    
+    for(ll i=1;i<18;i++)
+        for(ll j=0;j<n;j++)
+            if(par[i-1][j] != -1)
+                par[i][j] = par[i-1][par[i-1][j]];
+}
+
+struct node
+{
+    ll l = -1, r = -1;  
+    ll cnt = 0;
+};
+
+node st[5000000];
+ll id = 0;
+
+ll upd(ll root,ll l, ll r, ll l1, ll val)
+{
+    if(l1>r || l1<l)
+        return root;
+    if(l == r)
+    {
+        ll curr = id++;
+        st[curr] = st[root];
+        st[curr].cnt+=val;
+        return curr;
+    }
+    ll curr = id++;
+    st[curr] = st[root];
+    ll mid = (l+r)/2;
+    if(l1>mid)
+        st[curr].r = upd(st[root].r,mid+1,r,l1,val);
+    else    
+        st[curr].l = upd(st[root].l,l,mid,l1,val);
+    st[curr].cnt+=val;
+    return curr;    
+}
+
+ll que(ll root, ll l, ll r, ll l1, ll r1)
+{
+    if(root == -1)
+        return 0;
+    if(l1>r || l>r1)
+        return 0;
+    if(l1<=l && r1>=r)
+        return st[root].cnt;
+    ll mid = (l+r)/2;
+    return que(st[root].l,l,mid,l1,r1) + que(st[root].r,mid+1,r,l1,r1);
+}
+
+void build(ll root,ll l, ll r, ll l1)
+{
+    if(l == r)
+    {
+        st[root].cnt = (l1 == l);
+        return;
+    }
+    st[root].l = id++;
+    st[root].r = id++;
+    ll mid = (l+r)/2;
+    build(st[root].l,l,mid,l1);
+    build(st[root].r,mid+1,r,l1);
+    st[root].cnt = st[st[root].l].cnt + st[st[root].r].cnt; 
+}
+
+void dfs(ll curr, ll para, vector<ll> v[])
+{
+    if(para == -1)
+    {
+        addr[curr] = id++;
+        build(addr[curr],low,hi,val[curr]);
+    }
+    else
+        addr[curr] = upd(addr[para],low,hi,val[curr],1);
+    autoit(v[curr],it)
+    {
+        if(*it == para)
+            continue;
+        dfs(*it,curr,v);
+    }
+}
+
+int main()
+{
+   FAST/**/
+   
+   ll n,q;
+   cin>>n>>q;
+   rep(n)
+        cin>>val[i];
+   map<ll,ll> comp;
+   rep(n)
+        comp[val[i]] = 1;
+   ll curr = 0;
+   autoit(comp,it)
+       it->ss = curr++;
+   rep(n)
+        val[i] = comp[val[i]];
+   /*rep(n)
+     cout<<val[i]<<" ";
+   cout<<"\n";  */
+   low = 0, hi = curr-1;
+   vector<ll> v[n];
+   rep(n-1)
+   {
+       ll a,b;
+       cin>>a>>b;
+       a--,b--;
+       v[a].pb(b);
+       v[b].pb(a);
+   }
+   
+   init(v,n);
+   dfs(0,-1,v);
+   ll pans = 0;
+   while(q--)
+   {
+       ll a,b,l,r;
+       cin>>a>>b>>l>>r;
+       a=(a^pans)%n;
+       b=(b^pans)%n;
+       
+       //cout<<"b/w "<<a+1<<" , "<<b+1<<" = ";
+       ll lc = lca(a,b);
+       //cout<<"lc = "<<lc+1<<"\n";
+       //ll left,right;
+       auto it = comp.lower_bound(l);
+       auto it1 = comp.upper_bound(r);
+       if(it1 == comp.begin() || it == comp.end())
+       {
+           pans = 0;
+           cout<<pans<<"\n";
+           continue;
+       }
+       
+       it1--;
+       l = it->ss;
+       r = it1->ss;
+       if(l>r)
+       {
+           pans = 0;
+           cout<<pans<<"\n";
+           continue;
+       }
+       //cout<<"l = "<<l<<" and "<<r<<"\n";
+       //cout<<"for "<<a+1<<" = "<<que(addr[a],low,hi,l,r)<<"\n";
+       //cout<<"for "<<b+1<<" = "<<que(addr[b],low,hi,l,r)<<"\n";
+       ll sum = que(addr[a],low,hi,l,r) + que(addr[b],low,hi,l,r) - 2*que(addr[lc],low,hi,l,r);
+       sum+=(val[lc]>=l && val[lc]<=r);
+       pans = sum;
+       cout<<pans<<"\n";
+   }
+   
+   
+   return 0;        
+}  
+   

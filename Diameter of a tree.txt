@@ -1,0 +1,95 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+ll getdiam(vector<ll> v[], ll n, ll sta)
+{
+
+   ll dis[n];
+   memset(dis,-1,sizeof(dis));
+   dis[sta] = 1;
+   
+   queue<ll> q;
+   q.push(sta);
+   while(q.size()>0)
+   {
+       ll curr = q.front();
+       q.pop();
+       
+       autoit(v[curr],it)
+       {
+           if(dis[*it]!=-1)
+                continue;
+           dis[*it] = dis[curr] + 1;
+           q.push(*it);
+       }
+   }
+   
+   ll nod = -1;
+   ll maxi = 0;
+   for(ll i=0;i<n;i++)
+   {
+       if(dis[i]>maxi)
+       {
+           maxi = dis[i];
+           nod = i;
+       }
+   }
+   
+   memset(dis,-1,sizeof(dis));
+   dis[nod] = 1;
+   
+   //queue<ll> q;
+   q.push(nod);
+   ll par[n];
+   par[nod] = -1;
+   while(q.size()>0)
+   {
+       ll curr = q.front();
+       q.pop();
+       
+       autoit(v[curr],it)
+       {
+           if(dis[*it]!=-1)
+                continue;
+           dis[*it] = dis[curr] + 1;
+           par[*it] = curr;
+           q.push(*it);
+       }
+   }
+   
+   ll nod1 = -1;
+   maxi = 0;
+   for(ll i=0;i<n;i++)
+   {
+       if(dis[i]>maxi)
+       {
+           maxi = dis[i];
+           nod1 = i;
+       }
+   }
+   
+   vector<ll> nodes;
+   nodes.pb(nod1);
+   while(par[nodes.back()]!=-1)
+        nodes.pb(par[nodes.back()]);
+   return (ll)nodes.size()-1;    
+}

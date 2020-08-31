@@ -1,0 +1,127 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define inf 1000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+
+ll ans[100005];
+
+map<ll,ll> freq[100005];
+map<ll,ll> sum[100005];
+ll col[100005];
+
+ll merge(ll i, ll j)
+{
+    if(freq[i].size()>freq[j].size())
+    {
+        autoit(freq[j],it)
+        {
+            ll temp = 0;
+            if(freq[i].find(it->ff)!=freq[i].end())
+            {
+                temp = freq[i][it->ff];
+                ll temp1 = sum[i][temp];
+                sum[i][temp]-=it->ff;
+                temp1-=it->ff;
+                if(temp1 == 0)
+                    sum[i].erase(temp);
+            }
+            
+            temp+=it->ss;
+            sum[i][temp]+=it->ff;
+            freq[i][it->ff] = temp;
+        }
+    }
+    
+    else
+    {
+        swap(i,j);
+        autoit(freq[j],it)
+        {
+            ll temp = 0;
+            if(freq[i].find(it->ff)!=freq[i].end())
+            {
+                temp = freq[i][it->ff];
+                ll temp1 = sum[i][temp];
+                sum[i][temp]-=it->ff;
+                temp1-=it->ff;
+                if(temp1 == 0)
+                    sum[i].erase(temp);
+            }
+            
+            temp+=it->ss;
+            sum[i][temp]+=it->ff;
+            freq[i][it->ff] = temp;
+        }
+    }
+    
+    freq[j].clear();
+    sum[j].clear();
+    
+    return i;
+}
+
+ll get(ll curr, vector<ll> v[], ll par)
+{
+    freq[curr][col[curr]]++;
+    sum[curr][1] = col[curr];
+    ll id = curr;
+    autoit(v[curr],it)
+    {
+        if(*it == par)
+            continue;
+        ll temp = get(*it,v,curr);
+        id = merge(id,temp);
+    }
+    /*cout<<"for "<<curr+1<<"\n";
+    autoit(freq[id],it)
+        cout<<it->ff<<" "<<it->ss<<"\n";
+    cout<<"\n";*/
+    ans[curr] = sum[id].rbegin()->ss;
+    return id;
+}
+
+int main()
+{
+   FAST/**/
+   
+   ll n;
+   cin>>n;
+   
+   //ll col[n];
+   rep(n)
+        cin>>col[i];
+   
+   vector<ll> v[n];
+   rep(n-1)
+   {
+       ll a,b;
+       cin>>a>>b;
+       a--,b--;
+       v[a].pb(b);
+       v[b].pb(a);
+   }
+   
+   get(0,v,-1);
+   rep(n)
+        cout<<ans[i]<<" ";
+   return 0;        
+}  
+   

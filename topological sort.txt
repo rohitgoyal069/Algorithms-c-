@@ -1,0 +1,28 @@
+void tutil(ll curr, vector<ll> v[], stack<ll> &st,bool vis[])
+{
+    vis[curr] = 1;
+    autoit(v[curr],it)
+    {
+        if(vis[*it])
+            continue;
+        tutil(*it,v,st,vis);    
+    }
+    st.push(curr);
+}
+
+void tsort(vector<ll> v[], ll n, vector<ll> &topo)
+{
+    stack<ll> st;
+    bool vis[n];
+    memset(vis,0,sizeof(vis));
+    
+    rep(n)
+        if(vis[i] == 0)
+            tutil(i,v,st,vis);
+    while(st.size()>0)
+    {
+        topo.pb(st.top());
+        st.pop();
+    }
+    
+}
