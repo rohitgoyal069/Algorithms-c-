@@ -41,7 +41,7 @@ class SuffixArray
         suffix = buildSuffix(s);
         if(append)
             suffix.erase(suffix.begin());
-        lcp = buildLcp(s,suffix);
+        lcp = buildLcp(this->s,suffix);
     }
     
     vector<ll> buildSuffix(string const& s) {
