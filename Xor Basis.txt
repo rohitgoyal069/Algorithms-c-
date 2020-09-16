@@ -1,0 +1,128 @@
+//https://www.codechef.com/viewsolution/37963086
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+ll powa(ll a, ll b, ll c)
+{
+    a%=c;
+    if(a<0)
+    a+=c;
+    ll res = 1;
+    while(b>0)
+    {
+        if(b&1)
+            res*=a, res%=c;
+        a*=a, a%=c;
+        b>>=1;
+    }
+    return res;
+}
+
+class xorBasis{
+    
+    public:
+    vector<ll> basis;
+    ll lim;
+    ll siz;
+
+    void add(ll ele)
+    {
+        for(ll i=0;i<lim;i++)
+        {
+            ll p2 = (1ll<<i);
+            if((p2&ele) == 0)
+                continue;  
+            if(!basis[i])
+            {
+                basis[i] = ele;
+                siz++;
+                return;
+            }
+            
+            ele^=basis[i];
+        }
+    }
+    
+    void build(vector<ll> arr, ll lim = 63)
+    {
+        siz = 0;
+        this->lim = lim;
+        basis.resize(lim);
+        rep(lim)
+            basis[i] = 0;
+        ll n = arr.size();
+        rep(n)
+            if(arr[i]>0)
+                add(arr[i]);
+    }
+    
+    bool check(ll num)
+    {
+        for(ll i=0;i<lim;i++)
+        {
+            ll p2 = (1ll<<i);
+            if((p2&num) == 0)
+                continue;
+            if(!basis[i])
+                return 0;
+            p2^=basis[i];    
+        }
+        return 1;
+    }
+    
+};
+
+int main()
+{
+  FAST/**/
+   
+   ll t;
+   cin>>t;
+   
+   while(t--)
+   {
+       ll k,n;
+       cin>>k>>n;
+       
+       vector<ll> arr(n);
+       rep(n)
+            cin>>arr[i];
+       
+       xorBasis ele;
+       ele.build(arr,k);
+       ll siz = ele.siz;
+       ll ans = powa(2,k,LLONG_MAX)/powa(2,siz,LLONG_MAX);
+       cout<<ans<<"\n";
+               
+       
+   }
+   
+   return 0;        
+}  
+
+  
+          
+   
