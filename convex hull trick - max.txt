@@ -2,58 +2,83 @@
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef long long ll;
 typedef long double ld;
-#define INF 1000000000000
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
 
 using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
-struct line
+struct Line {
+	mutable ll k, m, p;
+	bool operator<(const Line& o) const { return k < o.k; }
+	bool operator<(ll x) const { return p < x; }
+};
+
+struct LineContainer : multiset<Line, less<>> {
+	// (for doubles, use inf = 1/.0, div(a,b) = a/b)
+	static const ll inf = LLONG_MAX;
+	ll div(ll a, ll b) { // floored division
+		return a / b - ((a ^ b) < 0 && a % b); }
+	bool isect(iterator x, iterator y) {
+		if (y == end()) return x->p = inf, 0;
+		if (x->k == y->k) x->p = x->m > y->m ? inf : -inf;
+		else x->p = div(y->m - x->m, x->k - y->k);
+		return x->p >= y->p;
+	}
+	void add(ll k, ll m) {
+		auto z = insert({k, m, 0}), y = z++, x = y;
+		while (isect(y, z)) z = erase(z);
+		if (x != begin() && isect(--x, y)) isect(x, y = erase(y));
+		while ((y = x) != begin() && (--x)->p >= y->p)
+			isect(x, erase(y));
+	}
+	ll query(ll x) {
+		assert(!empty());
+		auto l = *lower_bound(x);
+		return l.k * x + l.m;
+	}
+};
+
+int main()
 {
-    mutable ll m,c, ran;
-    
-    line(ll a, ll b, ll c):m(a),c(b),ran(c){}
-    
-    bool operator<(const line& o) const { return m < o.m; }
-    bool operator<(ll x) const { return ran < x; }};
+  FAST/**/
+   
+   LineContainer lc;
+   
+   ll n,c;
+   cin>>n>>c;
+   
+   ll arr[n];
+   rep(n)
+        cin>>arr[i];
+   ll ans = LLONG_MIN;
+   lc.add(2*arr[n-1],0-(arr[n-1]*arr[n-1]));
+   for(ll i=n-2;i>-1;i--)
+   {
+       ll cst = (arr[i]*arr[i]) + c - lc.query(arr[i]);
+       lc.add(2*arr[i], -cst-(arr[i]*arr[i]));
+       if(i == 0)
+            ans = cst;
+   }
+   cout<<ans;
+   
+   return 0;        
+}  
 
-multiset<line,less<>> ms;
-
-ll divi(ll a, ll b)
-{
-    return (a/b) - (a^b<0 && a%b);
-}
-
-bool inter(multiset<line> :: iterator a, multiset<line> :: iterator b)
-{
-    if(b == ms.end())
-    {
-        a->ran = INF;
-        return 0;
-    }
-    
-    if(a->m == b->m)
-        a->ran = (a->c>b->c)?INF:-INF;
-    else a->ran = divi(a->c - b->c, b->m - a->m);
-    
-    return a->ran>=b->ran;
-}
-
-void add(ll m, ll c)
-{
-    auto z = ms.insert(line(m,c,0));
-    auto y = z++;
-    auto x = y;
-    
-    while(inter(y,z))
-        z = ms.erase(z);   
-    if(x!=ms.begin() && inter(--x,y))
-        inter(x,y=ms.erase(y));
-    while((y=x)!=ms.begin() && (--x)->ran>=y->ran)
-        inter(x,ms.erase(y));
-}
-
-ll query(ll x)
-{
-    auto l = *ms.lower_bound(x);
-    return l.m*x + l.c;
-    
-}
+  
+          
+   
