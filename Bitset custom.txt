@@ -1,0 +1,227 @@
+//https://www.hackerearth.com/challenges/competitive/september-circuits-20/algorithm/lights-2-c20ca270/
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef unsigned long long ull;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+#define N 100005
+
+class BitSet{
+  
+  public:
+  
+  vector<ull> nums;
+  ll siz;
+  ll bits;
+  ll tot;
+  
+  void init(ll n, ll bits = 64)
+  {
+      nums.clear();
+      this->bits = bits;
+      tot = 0;
+      rep(bits)
+            tot+=(1ull<<i);
+      siz = n;
+      while(bits*(ll)nums.size()<siz)
+        nums.pb(0);
+  }
+  
+  void upd(ll l, ll r)
+  {
+      if(l>r)
+        return;
+      if(l/bits == r/bits)
+      {
+          ll id = (l/bits);
+          for(ll i=l;i<=r;i++)
+          {
+              ll bi = (1ull<<(i%bits));
+              nums[id]^=bi;
+          }
+          return;
+      }
+      for(ll i=(l/bits)+1;i<r/bits;i++)
+        nums[i]^=tot;   
+      for(ll i=l;i/bits == l/bits;i++)
+          nums[i/bits]^=(1ull<<(i%bits));
+      for(ll i=r;i>-1 && i/bits == r/bits;i--)
+          nums[i/bits]^=(1ull<<(i%bits));  
+  }
+  
+   bool maxi(BitSet &a, BitSet &b)
+  {
+      for(ll i=(ll)a.nums.size()-1;i>-1;i--)
+        if(a.nums[i]<b.nums[i])
+            return 1;
+        else if(a.nums[i]>b.nums[i])
+            return 0;
+      
+      return 0;    
+  }
+  
+   pair<ll,ll> sbits(BitSet &a, BitSet &b, ll l, ll r)
+  {
+      if(l>r)
+        return mp(0ll,-1ll);
+      ll tot = 0;
+      ll idt = -1;
+      if(l/bits == r/bits)
+      {
+          ll id = (l/bits);
+          ll xo = (a.nums[id]^b.nums[id]);
+          for(ll i=l;i<=r;i++)
+          {
+              if((1ull<<(i%bits))&xo)
+                tot++, idt = max(idt, i);
+          }
+      }
+      
+      else
+      {
+          for(ll i=(r/bits)-1;i>l/bits;i--)
+          {
+              ll num = (a.nums[i]^b.nums[i]);
+              ll temp = bpc(a.nums[i]^b.nums[i]);
+              tot+=temp;
+              if(temp == 0 || idt != -1)
+                    continue;
+              for(ll j=bits-1;j>-1;j--)
+              {
+                  if((1ull<<j)&num)
+                  {
+                      idt = i*bits + j;
+                      break;
+                  }
+              }
+          }
+          ll xo = (a.nums[l/bits]^b.nums[l/bits]);          
+          for(ll i=l;i/bits == l/bits;i++)
+          {
+              if((1ull<<(i%bits))&xo)
+                tot++, idt = max(idt, i);
+          }
+          
+          xo = (a.nums[r/bits]^b.nums[r/bits]);
+          
+          for(ll i=r;i>-1 && i/bits == r/bits;i--)
+          {
+              if((1ull<<(i%bits))&xo)
+                tot++, idt = max(idt, i);
+          }
+      }
+      return mp(tot,idt);
+  }
+  
+  void xo(BitSet &a, BitSet &b)
+  {
+      for(ll i=0;i<a.nums.size();i++)
+            a.nums[i]^=b.nums[i];
+  }
+  
+  
+    
+};
+
+int main()
+{
+  FAST/**/
+   
+   ll t;
+   cin>>t;
+   
+   while(t--){
+   ll n,m;
+   cin>>n>>m;
+   
+   BitSet days[m+1];
+   
+   BitSet curr;
+   curr.init(n);
+   
+   BitSet largest = curr;
+   days[0] = curr;
+   ll lid = 0;
+   
+   for(ll i=1;i<=m;i++)
+   {
+       days[i] = days[i-1];
+      
+       ll ty;
+       cin>>ty;
+       
+       if(ty == 1)
+       {
+           ll l,r;
+           cin>>l>>r;
+           r = n-r;
+           l = n-l;
+           swap(l,r);
+           curr.upd(l,r);
+           days[i].xo(days[i],curr);
+           if(largest.maxi(largest,curr))
+                lid = i, largest = curr;
+       }
+       
+       else if(ty == 2)
+       {
+           days[i].xo(days[i],curr);
+           ll a,b,l,r;
+           cin>>a>>b>>l>>r;
+           l = n-l;
+           r = n-r;
+           swap(l,r);
+           pair<ll,ll> ans = days[a-1].sbits(days[a-1],days[b],l,r);
+           if(ans.ss == -1)
+                ans.ss = 0;
+           else ans.ss = n-ans.ss;        
+           cout<<ans.ff<<" "<<ans.ss<<'\n';
+       }
+       
+       else
+           cout<<lid<<"\n", days[i].xo(days[i],curr);
+      /* cout<<"for day "<<i<<" --- ";       
+       for(ll j=days[i].nums.size()-1;j>-1;j--)    
+       {
+           for(ll j1=63;j1>-1;j1--)
+           {
+               if(j1+j*64>(n-1))
+                    continue;
+               ll pr = (((1ull<<j1)&(days[i].nums[j]))>0);
+               cout<<pr;
+           }
+       }
+       cout<<'\n';*/
+   }
+   }
+   
+   
+   
+   return 0;        
+}  
+
+  
+          
+   

@@ -1,3 +1,5 @@
+//FFT with seg. tree - https://codeforces.com/problemset/problem/1218/E
+
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef long long ll;

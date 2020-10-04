@@ -1,0 +1,85 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+
+using namespace std;
+
+ll find(ll x, ll par[])
+{
+    if(par[x] == x)
+        return x;
+    return find(par[x], par);    
+}
+
+void unio(ll x, ll y, ll par[], ll rank[])
+{
+    x = find(x, par);
+    y = find(y, par);
+    
+    if(x == y)
+        return;
+    
+    if(rank[x] > rank[y])
+    {
+        par[y] = x;
+        rank[x] = max(rank[x], rank[y] + 1);
+    }
+    
+    else
+    {
+        par[x] = y;
+        rank[y] = max(rank[y], rank[x] + 1);
+    }
+}
+
+void aux(vector<ll> v[], ll curr, stack<ll> &st, bool vis[])
+{
+    vis[curr] = 1;
+    for(auto it = v[curr].begin();it!=v[curr].end();it++)
+    {
+        if(vis[*it] == 1)
+            continue;
+        aux(v, *it, st, vis);
+    }
+    
+    st.push(curr);
+}
+
+void aux1(vector<ll> v[], ll curr, bool vis[], ll par[], ll rank[])
+{
+    vis[curr] = 1;
+    for(auto it = v[curr].begin();it!=v[curr].end();it++)
+    {
+        if(vis[*it] == 1)
+            continue;
+        unio(*it, curr, par, rank);    
+        aux1(v, *it, vis,par, rank);
+    }
+    
+}
+
+
+void kol(vector<ll> v[], ll n, ll par[], ll rank[], vector<ll> v1[])
+{
+    stack<ll> st;
+    bool vis[n];
+    memset(vis, 0, sizeof(vis));
+    
+    for(ll i=0;i<n;i++)
+    {
+        if(vis[i] == 1)
+            continue;  
+        aux(v, i, st, vis);    
+    }
+    
+    memset(vis, 0, sizeof(vis));
+    while(!st.empty())
+    {
+        ll curr = st.top();
+        st.pop();
+        if(vis[curr])
+            continue;
+        aux1(v1, curr, vis, par, rank);        
+    }
+}
