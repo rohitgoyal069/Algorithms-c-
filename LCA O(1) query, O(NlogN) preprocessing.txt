@@ -1,3 +1,5 @@
+https://codeforces.com/contest/1062/submission/94856731
+
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef int ll;
@@ -24,11 +26,12 @@ using namespace std;
 mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
 #define N 100005
-#define N1 18    // ceil(log2(2*N))
+#define N1 18
 
 ll start[N];
 ll endi[N];
 pair<ll,ll> rmq[N1][2*N];
+pair<pii,ll> rangeLca[N1][N];
 ll ht[N];
 ll powa[63];
 ll len[2*N];
@@ -63,6 +66,24 @@ inline ll lca(ll a, ll b)
     return min(rmq[len[leng]][l], rmq[len[leng]][r-powa[len[leng]]+1]).ss;
 }
 
+inline pair<pii,ll> comb(pair<pii,ll> lft, pair<pii,ll> rt)
+{
+    ll lc = lca(lft.ss,rt.ss);
+    if(lft.ss == lc)
+        return lft;
+    if(rt.ss == lc)
+        return rt;
+    
+    return mp(mp(lft.ff.ff,rt.ff.ff),lc);
+}
+
+inline pair<pii,ll> getRangeLca(ll l, ll r)
+{
+    ll len1 = (r-l+1);
+    ll leng = len[len1];
+    return comb(rangeLca[leng][l], rangeLca[leng][r-powa[leng]+1]);
+}
+
 void init(vector<ll> v[], ll n)
 {
     euler.clear();
@@ -85,7 +106,7 @@ void init(vector<ll> v[], ll n)
             }
     
     for(ll i=0;i<lim;i++)
-        rmq[0][i] = mp(ht[euler[i]], euler[i]);
+        rmq[0][i] = mp(ht[euler[i]], euler[i]),  rangeLca[0][i] = mp(mp(euler[i],euler[i]),euler[i]);
     
     for(ll j=1;j<N1;j++)
         rep(lim)
@@ -95,6 +116,92 @@ void init(vector<ll> v[], ll n)
             else
                 rmq[j][i] = min(rmq[j-1][i], rmq[j-1][i+powa[j-1]]);
         }
-        
+    
+    for(ll i=0;i<n;i++)
+        rangeLca[0][i] = mp(mp(i,i),i);
+    
+    for(ll j=1;j<N1;j++)
+        rep(n)
+        {
+            if(i+powa[j-1]>=n)
+                rangeLca[j][i] = rangeLca[j-1][i];
+            else
+                rangeLca[j][i] = comb(rangeLca[j-1][i], rangeLca[j-1][i+powa[j-1]]);
+        }
                     
 }
+
+ll get1(ll l, ll r)
+{
+    if(l == r)
+        return l;
+    ll mid = (l+r)/2;    
+    return lca(get1(l,mid),get1(mid+1,r));    
+}
+
+pii get2(ll l, ll r, ll ex)
+{
+    if(ex == l)
+    {
+        ll lc = getRangeLca(l+1,r).ss;
+          //cout<<"lc1 = "<<lc+1<<" at "<<ex+1<<"\n";
+        return mp(ht[lc],ex);
+    }
+    
+    else if(ex == r)
+    {
+        ll lc = getRangeLca(l,r-1).ss;
+        //cout<<"lc2 = "<<lc+1<<" at "<<ex+1<<"\n";
+        return mp(ht[lc],ex);
+    }
+    
+
+    ll lc1 = getRangeLca(l,ex-1).ss;
+    ll lc2 = getRangeLca(ex+1,r).ss;
+    lc1 = lca(lc1,lc2);
+    //cout<<"lc3 = "<<lc1+1<<" at "<<ex+1<<"\n";
+    return mp(ht[lc1],ex);
+
+}
+
+int main()
+{
+  FAST/**/
+   
+   ll n,q;
+   cin>>n>>q;
+   
+   vector<ll> v[n];
+   rep(n-1)
+   {
+       ll t;
+       cin>>t;
+       t--;
+       v[i+1].pb(t);
+       v[t].pb(i+1);
+   }
+   
+   init(v,n);
+   
+   while(q--)
+   {
+        ll l,r;
+        cin>>l>>r;
+        l--,r--;
+        
+        auto p = getRangeLca(l,r).ff;
+        pii p1 = max(get2(l,r,p.ff),get2(l,r,p.ss));
+        cout<<p1.ss+1<<" "<<p1.ff<<"\n";
+        
+   }
+   
+   
+   
+   
+   
+   return 0;        
+}  
+
+  
+          
+   
