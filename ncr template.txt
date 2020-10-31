@@ -6,9 +6,10 @@ typedef long double ld;
 #define mp make_pair
 #define ff first
 #define ss second
-#define mod 998244353
-#define inf 1000000000000000
-#define bpc(x) __builtin_parityll(x)
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
 #define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
 #define rep(n) for(ll i = 0; i < n; i++)
 #define repi(i,n) for(ll i = 0; i < n; i++)
@@ -20,12 +21,13 @@ using namespace __gnu_pbds;
 #define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
 
 using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
 ll powa(ll a, ll b, ll c)
 {
     a%=c;
     if(a<0)
-	a+=c;
+    a+=c;
     ll res = 1;
     while(b>0)
     {
@@ -37,6 +39,42 @@ ll powa(ll a, ll b, ll c)
     return res;
 }
  
+ll norm(ll a)
+{
+    a%=mod;
+    if(a<0)
+        a+=mod;
+    return a;    
+}
+ 
+ll add(ll a, ll b)
+{
+    a = norm(a);
+    b = norm(b);
+    return norm(a+b);
+}
+ 
+ll mul(ll a, ll b)
+{
+    a = norm(a);
+    b = norm(b);
+    return norm(a*b);
+}
+ 
+ 
+ll sub(ll a, ll b)
+{
+    a = norm(a);
+    b = norm(b);
+    return norm(a-b);
+}
+ 
+ll divi(ll a, ll b)
+{
+    b = powa(b,mod-2,mod);
+    return mul(a,b);
+}
+
 #define N 200005
  
 ll fact[N];
@@ -56,15 +94,17 @@ ll ncr(ll n, ll r)
 
 int main()
 {
-   FAST/**/
+  FAST/**/
    
    fact[0] = 1;
    for(ll i=1;i<N;i++)
         fact[i] = fact[i-1]*i, fact[i]%=mod;
    for(ll i=0;i<N;i++)
-        ifact[i] = powa(fact[i],mod-2,mod);
-   
+        ifact[i] = powa(fact[i],mod-2,mod);     
    
    return 0;        
 }  
+
+  
+          
    

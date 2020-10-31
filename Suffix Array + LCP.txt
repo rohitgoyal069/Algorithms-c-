@@ -1,6 +1,6 @@
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
-typedef long long ll;
+typedef int ll;
 typedef long double ld;
 #define pb push_back
 #define mp make_pair
@@ -11,6 +11,7 @@ typedef long double ld;
 #define inf 1000000000000000000
 #define bpc(x) __builtin_popcountll(x)
 #define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
 #define rep(n) for(ll i = 0; i < n; i++)
 #define repi(i,n) for(ll i = 0; i < n; i++)
 
@@ -30,17 +31,19 @@ class SuffixArray
     vector<vector<ll>> cno;
     vector<ll> suffix;
     vector<ll> lcp;
+    ll n;
     string s;
     const ll alphabet = 256;
     
     SuffixArray(string s, bool append = true)
     {
+        this->n = s.length();
         if(append)
             s+='$';
         this->s = s;
         suffix = buildSuffix(s);
         if(append)
-            suffix.erase(suffix.begin());
+            suffix.erase(suffix.begin()), this->s.pop_back();
         lcp = buildLcp(this->s,suffix);
     }
     
@@ -115,8 +118,56 @@ class SuffixArray
     
     }
     
+    ll lower_bound(string &a)
+    {
+        ll start = 0;
+        ll end = n-1;
+        ll ans = n;
+        
+        ll len = a.length();
+        
+        while(end>=start)
+        {
+            ll mid = (start + end)/2;
+            string s1 = s.substr(suffix[mid],min(n-suffix[mid],len));
+            if(s1>=a)
+            {
+                ans = mid;
+                end = mid - 1;
+            }
+            
+            else
+                start = mid + 1;
+        }
+        return ans;
+    }
+    
+    ll upper_bound(string &a)
+    {
+        ll start = 0;
+        ll end = n-1;
+        ll ans = n;
+        
+        ll len = a.length();
+        
+        while(end>=start)
+        {
+            ll mid = (start + end)/2;
+            string s1 = s.substr(suffix[mid],min(n-suffix[mid],len));
+            if(s1>a)
+            {
+                ans = mid;
+                end = mid - 1;
+            }
+            
+            else
+                start = mid + 1;
+        }
+        return ans;
+    }
     
 };
+
 
 int main()
 {
