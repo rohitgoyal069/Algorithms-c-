@@ -1,0 +1,183 @@
+//https://codeforces.com/contest/893/submission/98158877
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef int ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 2000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+#define N 100005
+#define ds pair<pii,pii>
+
+ll start[N];
+ll arr[N];
+ll endi[N];
+ll ht[N];
+
+ll flatten(ll curr, vector<ll> v[], vector<ll> &flat, ll rt)
+{
+    if(curr == rt)
+        start[curr] = 0;
+    
+    flat.emplace_back(curr);
+    ll temp = start[curr];
+    for(auto it = v[curr].begin();it!=v[curr].end();it++)
+    {
+        if(start[*it]!=-1)
+            continue;
+        start[*it] = temp + 1;
+        temp = flatten(*it, v, flat, rt);
+    }
+    
+    endi[curr] = temp;
+    return endi[curr];
+}
+
+vector<ds> comb(vector<ds> &a, vector<ds> &b, vector<ds> &v)
+{
+    ll p1 = -1, p2 = -1;
+    ll l1 = a.size(), l2 = b.size();
+    ll m1 = inf;
+    while(p1+1<l1 || p2+1<l2)
+    {
+        if(p1+1 >= l1)
+            v.pb(mp(mp(b[p2+1].ff.ff,min(m1,b[p2+1].ff.ss)),mp(l1-1,p2+1))), p2++;
+        else if(p2+1 >= l2)    
+            v.pb(mp(mp(a[p1+1].ff.ff,min(m1,a[p1+1].ff.ss)),mp(p1+1,l2-1))), p1++;
+        else
+        {
+            if(a[p1+1].ff.ff<b[p2+1].ff.ff)
+                v.pb(mp(mp(a[p1+1].ff.ff,min(m1,a[p1+1].ff.ss)),mp(p1+1,p2))), p1++;
+            else v.pb(mp(mp(b[p2+1].ff.ff,min(m1,b[p2+1].ff.ss)),mp(p1,p2+1))), p2++;    
+        }
+        
+        m1 = v.back().ff.ss;
+    }
+    return v;
+}
+
+void build(vector<ds> st[], ll l, ll r, ll i, vector<ll> &flat)
+{
+    if(l == r)
+    {
+        st[i].pb(mp(mp(ht[flat[l]], arr[flat[l]]), mp(0,0)));
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    build(st,l,mid,2*i+1,flat);
+    build(st,mid+1,r,2*i+2,flat);
+    comb(st[2*i+1], st[2*i+2], st[i]);
+}
+
+ll que(vector<ds> st[], ll l1, ll r1, ll l2, ll l, ll r, ll i, ll id = -inf)
+{
+    if(l>r1 || l1>r)
+        return inf;
+    if(id == -inf)
+        id = upper_bound(st[i].begin(), st[i].end(), mp(mp(l2,inf),mp(inf,inf))) - st[i].begin() - 1;    
+    if(st[i][0].ff.ff>l2 || id<0)
+        return inf;    
+    if(l == r)
+        return st[i][0].ff.ss;
+    id = min(id, (ll)st[i].size() - 1);    
+    if(id<0)
+        return inf;
+    if(l1<=l && r1>=r)
+        return st[i][id].ff.ss;
+    ll mid = (l+r)/2;    
+    return min(que(st,l1,r1,l2,l,mid,2*i+1,st[i][id].ss.ff), que(st,l1,r1,l2,mid+1,r,2*i+2,st[i][id].ss.ss));    
+}
+
+int main()
+{
+  FAST/**/
+  
+  ll n,r;
+  cin>>n>>r;
+  
+  rep(n)
+        cin>>arr[i];
+  
+  vector<ll> v[n];
+  rep(n-1)
+  {
+      ll a,b;
+      cin>>a>>b;
+      a--,b--;
+      v[a].pb(b);
+      v[b].pb(a);
+  }
+    
+  r--;
+  vector<ll> flat;
+  memset(start,-1,sizeof(start));
+  memset(endi,-1,sizeof(endi));
+  
+  flatten(r,v,flat,r);
+  memset(ht,-1,sizeof(ht));
+  ht[r] = 0;       
+  
+  queue<ll> q;
+  q.push(r);
+  while(q.size()>0)
+  {
+      auto curr = q.front();
+      q.pop();
+      
+      autoit(v[curr],it)
+      {
+          if(ht[*it] != -1)     
+                continue;
+          ht[*it] = ht[curr] + 1;
+          q.push(*it);
+      }
+  }
+  
+  ll ht1 = ceil(log2(n));
+  ht1 = (1ll<<(ht1 + 1)) - 1;
+  
+  vector<ds> st[ht1];
+  build(st,0,n-1,0,flat);
+  
+  ll las = 0;
+  ll m;
+  cin>>m;
+  
+  while(m--)
+  {
+      ll p,q;
+      cin>>p>>q;
+      ll nd = (p+las)%n;
+      ll k = (q+las)%n;
+      ll ans = que(st,start[nd],endi[nd],ht[nd] + k, 0, n-1, 0);
+      cout<<ans<<"\n";
+      
+      las = ans;
+  }
+    
+  return 0;
+}
+   
+   
+ 
