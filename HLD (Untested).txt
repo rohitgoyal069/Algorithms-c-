@@ -1,0 +1,97 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+#define N 100005
+
+class HLD{
+
+    public:
+    vector<ll> par, head, ht, pos, heavy, rpos;
+    vector<vector<ll>> adj;
+    vector<ll> heads;
+    ll cpos, n;
+    
+    ll dfs(ll curr, ll pa)
+    {
+        ll msiz = 0;
+        ll tsiz = 1;
+        autoit(adj[curr],it)
+        {
+            if(*it == pa)
+                continue;
+            par[*it] = curr;
+            ht[*it] = ht[curr] + 1;
+            ll temp = dfs(*it,curr);
+            if(temp>msiz)   
+                heavy[curr] = *it, msiz = temp;
+            tsiz+=temp;    
+        }
+        
+        return tsiz;
+    }
+    
+    ll decompose(ll curr, ll hv)
+    {
+        head[curr] = hv;
+        pos[curr] = cpos++;
+        if(heavy[curr] != -1)
+            decompose(heavy[curr], hv);
+        ll en = pos[curr];    
+        autoit(adj[curr],it)
+        {
+            if(*it == par[curr] || *it == heavy[curr])
+                continue;
+            en = decompose(*it,*it);    
+        }
+        
+        rpos[curr] = en;
+        
+        return en;
+                
+    }
+    
+    void init(vector<ll> v[], ll n)
+    {
+        cpos = 0;
+        this->n = n;
+        par = vector<ll>(n);
+        head = vector<ll>(n);
+        rpos = vector<ll>(n);
+        ht = vector<ll>(n);
+        heavy = vector<ll>(n,-1);
+        pos = vector<ll>(n);
+        rep(n)
+        {
+            vector<ll> temp;
+            autoit(v[i],it)
+                temp.pb(*it);
+            adj.pb(temp);    
+        }
+        dfs(0,0);   
+        decompose(0,0);
+    }
+    
+};
