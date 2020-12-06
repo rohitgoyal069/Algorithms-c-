@@ -1,0 +1,203 @@
+//https://www.codechef.com/viewsolution/40100536
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+struct pt {
+    ll x, y;
+    pt() {}
+    pt(ll _x, ll _y): x(_x), y(_y) {}
+    pt operator+(const pt & p) const { return pt(x + p.x, y + p.y); }
+    pt operator-(const pt & p) const { return pt(x - p.x, y - p.y); }
+    ll cross(const pt & p) const { return x * p.y - y * p.x; }
+    ll dot(const pt & p) const { return x * p.x + y * p.y; }
+    ll cross(const pt & a, const pt & b) const { return (a - *this).cross(b - *this); }
+    ll dot(const pt & a, const pt & b) const { return (a - *this).dot(b - *this); }
+    ll sqrLen() const { return this->dot(*this); }
+    bool operator < (const pt& b) {
+        return (*this).x < b.x || ((*this).x == b.x && (*this).y < b.y);
+    }
+    friend bool operator < (const pt& a, const pt& b) {
+        return a.x < b.x || (a.x == b.x && a.y < b.y);
+    }
+    bool operator > (const pt& b) {
+        return (*this).x > b.x || ((*this).x == b.x && (*this).y > b.y);
+    }
+    bool operator == (const pt& b) {
+        return (this->x == b.x && this->y == b.y);
+    }
+
+
+};
+
+bool cmp(const pt& a, const pt& b) {
+    return a.x < b.x || (a.x == b.x && a.y < b.y);
+}
+
+class Hull {
+
+public:
+    vector<pt> poly;
+    ll n;
+    ll top;
+
+    int sgn(ll val) {
+        return val > 0 ? 1 : (val == 0 ? 0 : -1);
+    }
+
+    int cw(pt a, pt b, pt c) {
+        return -sgn((b - a).x * (c - b).y - (b - a).y * (c - b).x);
+    }
+
+    int ccw(pt a, pt b, pt c) {
+        return sgn((b - a).x * (c - b).y - (b - a).y * (c - b).x);
+    }
+
+
+    void init(vector<pt>& a) {
+
+        poly.clear();
+        n = -1;
+        top = -1;
+        if (a.size() == 1) {
+            poly.pb(a[0]);
+            n = 1;
+            return;
+        }
+
+        sort(a.begin(), a.end(), cmp);
+        pt p1 = a[0], p2 = a.back();
+        vector<pt> up, down;
+        up.push_back(p1);
+        down.push_back(p1);
+        for (int i = 1; i < (int)a.size(); i++) {
+            if (i == a.size() - 1 || cw(p1, a[i], p2) > 0) {
+                while (up.size() >= 2 && cw(up[up.size() - 2], up[up.size() - 1], a[i]) <= 0)
+                    up.pop_back();
+                up.push_back(a[i]);
+            }
+            if (i == a.size() - 1 || ccw(p1, a[i], p2) > 0) {
+                while (down.size() >= 2 && ccw(down[down.size() - 2], down[down.size() - 1], a[i]) <= 0)
+                    down.pop_back();
+                down.push_back(a[i]);
+            }
+        }
+        for (int i = 0; i < (int)down.size(); i++)                  //counter-clockwise, swap up with down inside loops to change to clockwise
+            poly.pb(down[i]);
+        top = (ll)down.size() - 1;
+        for (int i = (int) up.size() - 2; i > 0; i--)
+            poly.pb(up[i]);
+        n = poly.size();
+
+    }
+
+    ll isInside(pt point)
+    {
+        //cout<<"top = "<<top<<'\n';
+        if (point < poly[0] || point > poly[top]) return 1;
+        auto orientation = -ccw(point, poly[top], poly[0]);
+        if (orientation == 0) {
+            if (point == poly[0] || point == poly[top]) return 0;
+            return top == 1 || top + 1 == poly.size() ? 0 : -1;
+        } else if (orientation < 0) {
+            auto itRight = lower_bound(begin(poly) + 1, begin(poly) + top, point);
+            return sgn(-ccw(itRight[0], point, itRight[-1]));
+        } else {
+            auto itLeft = upper_bound(poly.rbegin(), poly.rend() - top - 1, point);
+            return sgn(-ccw(itLeft == poly.rbegin() ? poly[0] : itLeft[-1], point, itLeft[0]));
+        }
+    }
+
+};
+
+int main()
+{
+    FAST/**/
+
+    ll t;
+    cin >> t;
+
+    while (t--)
+    {
+        ll n, q;
+        cin >> n >> q;
+
+        vector<Hull> v;
+        vector<pt> arr(n);
+        rep(n)
+        cin >> arr[i].x >> arr[i].y;
+        sort(arr.begin(), arr.end(), cmp);
+        Hull temp;
+        while (arr.size() > 2)
+        {
+            vector<pt> arr1;
+            temp.init(arr);
+            if (temp.poly.size() <= 2)
+                break;
+            v.pb(temp);
+            autoit(arr, it) {
+                if (temp.isInside(*it) == -1)
+                    arr1.pb(*it);
+            }
+            arr = arr1;
+        }
+
+        ll siz = v.size();
+
+        while (q--)
+        {
+            ll x, y;
+            cin >> x >> y;
+            pt p(x, y);
+
+            if (v.size() == 0)
+            {
+                cout << 0 << '\n';
+                continue;
+            }
+
+            ll start = 0;
+            ll end = siz - 1;
+            ll hi = 0;
+            while (end >= start)
+            {
+                ll mid = (start + end) / 2;
+                if (v[mid].isInside(p) == -1)
+                {
+                    hi = mid + 1;
+                    start = mid + 1;
+                }
+
+                else end = mid - 1;
+            }
+            cout << hi << "\n";
+        }
+    }
+
+    return 0;
+}
+
+
