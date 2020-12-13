@@ -1,0 +1,161 @@
+//https://www.codechef.com/viewsolution/40423265
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+#define N 350
+#define N1 100005
+
+class poly
+{
+    public:
+    ll a0, a1, a2, a3;
+    poly()
+    {
+        a0 = inf, a1 = 0, a2 = 0, a3 = 0;
+    }
+    poly(ll a0, ll a1, ll a2, ll a3):a0(a0), a1(a1), a2(a2), a3(a3) {}
+    ll eval(ll x)
+    {
+        return (x*x*x)*a3 + (x*x)*a2 + x*a1 + a0;
+    }
+};
+
+class LiChao{
+    
+    public:
+    ll n;
+    vector<poly> st;
+    ll L, R;
+    
+    void add(ll l, ll r, ll i, poly pt)
+    {
+        if(l>r)
+            return;
+        ll mid = (l+r)/2;
+        bool p1 = pt.eval(mid)<st[i].eval(mid);
+        bool p2 = pt.eval(r)<st[i].eval(r);
+        if(p1)
+            swap(st[i], pt);
+        if(l == r)
+            return;
+        if(p1 != p2)    
+            add(mid+1, r, 2*i+2, pt);
+        else add(l, mid, 2*i+1, pt);    
+    }
+    
+    ll que(ll l, ll r, ll i, ll l1)
+    {
+        //return inf;
+        if(l1>r || l1<l)
+            return inf;
+        ll val = st[i].eval(l1);    
+        if(l == r)
+            return val;
+        ll mid = (l+r)/2;
+        if(l1>mid)
+            return min(val, que(mid+1, r, 2*i+2, l1));
+        return min(val, que(l, mid, 2*i+1, l1));    
+    }
+    
+    ll eval(ll x)
+    {
+        if(x>R || x<L)
+            return inf;
+        return que(L, R, 0, x);
+    }
+    
+    void insert(poly x)
+    {
+        add(L, R, 0, x);
+    }
+    
+    void init(vector<poly> &arr, ll L, ll R)
+    {
+        this->L = L;
+        this->R = R;
+        ll ht = ceil(log2(R-L+1));
+        ht = (1ll<<(ht + 1)) - 1;
+        st = vector<poly>(ht, poly());
+        autoit(arr,it)
+            insert(*it);
+    }
+    
+
+};
+
+
+int main()
+{
+  FAST/**/
+  
+  ll t;
+  cin>>t;
+  
+  while(t--)
+  {
+      ll n,q;
+      cin>>n;
+      
+      LiChao st;
+      vector<poly> arr(n);
+      rep(n)
+          cin>>arr[i].a0>>arr[i].a1>>arr[i].a2>>arr[i].a3;
+      st.init(arr, N, N1);          
+      unordered_map<ll,ll> ma;
+      cin>>q;
+      while(q--)
+      {
+          ll x;
+          cin>>x;
+          if(x<N)
+          {
+              //cout<<"hehe\n";
+              if(ma.count(x))
+                cout<<ma[x]<<'\n';
+              else
+              {
+                  ll ans = inf;
+                  rep(n)
+                        ans = min(ans, arr[i].eval(x));
+                  ma[x] = ans;
+                  cout<<ans<<'\n';
+              }
+          }
+          
+          else
+              cout<<st.eval(x)<<"\n";
+      }
+        
+            
+                
+  }
+    
+  return 0;
+}
+   
+   
+ 
