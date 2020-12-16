@@ -1,4 +1,5 @@
 //https://www.codechef.com/viewsolution/40100536
+//https://www.codechef.com/viewsolution/40423942
 
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
@@ -59,8 +60,9 @@ bool cmp(const pt& a, const pt& b) {
 
 class Hull {
 
-public:
+    public:
     vector<pt> poly;
+    vector<pt> pts;
     ll n;
     ll top;
 
@@ -75,20 +77,40 @@ public:
     int ccw(pt a, pt b, pt c) {
         return sgn((b - a).x * (c - b).y - (b - a).y * (c - b).x);
     }
+    
+    
+    ll area(vector<pt> &arr)
+    {
+        ll n = poly.size();
+        ll ans = 0;
+        rep(n)
+            ans+=arr[i].x*(arr[(i+1)%n].y) - arr[i].y*(arr[(i+1)%n].x);
+        return abs(ans);    
+    }
 
-
-    void init(vector<pt>& a) {
+    Hull()
+    {
+        
+    }
+    
+    void init(vector<pt>& a, bool sorted) {
 
         poly.clear();
-        n = -1;
+        pts.clear();
+        n = 0;
         top = -1;
-        if (a.size() == 1) {
-            poly.pb(a[0]);
-            n = 1;
+        if (a.size() <= 1) {
+            if(a.size()){
+                poly.pb(a[0]);
+                pts.pb(a[0]);
+                n = 1;
+                top = 0;
+            }
             return;
         }
-
-        sort(a.begin(), a.end(), cmp);
+        
+        if(!sorted)
+            sort(a.begin(), a.end(), cmp);
         pt p1 = a[0], p2 = a.back();
         vector<pt> up, down;
         up.push_back(p1);
@@ -110,13 +132,19 @@ public:
         top = (ll)down.size() - 1;
         for (int i = (int) up.size() - 2; i > 0; i--)
             poly.pb(up[i]);
+            
+        if(up.size()>1){    
+            pts.resize(poly.size());
+            merge(up.begin()+1, up.end()-1, down.begin(), down.end(), pts.begin()); 
+        }
+        else pts = a;    
+        
         n = poly.size();
 
     }
 
     ll isInside(pt point)
     {
-        //cout<<"top = "<<top<<'\n';
         if (point < poly[0] || point > poly[top]) return 1;
         auto orientation = -ccw(point, poly[top], poly[0]);
         if (orientation == 0) {
@@ -130,74 +158,90 @@ public:
             return sgn(-ccw(itLeft == poly.rbegin() ? poly[0] : itLeft[-1], point, itLeft[0]));
         }
     }
+    
+    friend Hull merge(Hull &a, Hull &b)
+    {
+        vector<pt> v(a.pts.size() + b.pts.size());
+        merge(a.pts.begin(), a.pts.end(), b.pts.begin(), b.pts.end(), v.begin());
+        Hull hull;
+        hull.init(v,true);
+        return hull;
+    }
 
 };
+
+void build(vector<Hull> &st, ll l, ll r, ll i, vector<pt> &arr)
+{
+    if(l == r)
+    {
+        vector<pt> temp;
+        temp.pb(arr[l]);
+        st[i].init(temp, true);
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    build(st, l, mid, 2*i+1, arr);
+    build(st, mid+1, r, 2*i+2, arr);
+    
+    st[i] = merge(st[2*i+1], st[2*i+2]);
+}
+
+Hull que(vector<Hull> &st, ll l, ll r, ll l1, ll r1, ll i)
+{
+    if(l1>r || l>r1)
+        return Hull();
+    if(l1<=l && r1>=r)
+        return st[i];
+    ll mid = (l+r)/2;    
+    Hull lft = que(st, l, mid, l1, r1, 2*i+1);
+    Hull rt = que(st, mid+1, r, l1, r1, 2*i+2);
+    return merge(lft, rt);
+}
+
+ll dis(Hull h)
+{
+    ll dis = 0;
+    ll siz = h.pts.size();
+    rep(siz)
+        for(ll j=i+1;j<siz;j++)
+            dis = max(dis, (h.pts[i]-h.pts[j]).sqrLen());
+    return dis;        
+}
 
 int main()
 {
     FAST/**/
 
-    ll t;
-    cin >> t;
-
-    while (t--)
+   
+    ll n;
+    cin>>n;
+    
+    vector<pt> arr(n);
+    rep(n)
+        cin>>arr[i].x>>arr[i].y;
+        
+    ll ht = ceil(log2(n));
+    ht = (1ll<<(ht + 1)) - 1;
+    
+    vector<Hull> st(ht);
+    build(st, 0, n-1, 0, arr);
+    
+    ll q;
+    cin>>q;
+    
+    while(q--)
     {
-        ll n, q;
-        cin >> n >> q;
-
-        vector<Hull> v;
-        vector<pt> arr(n);
-        rep(n)
-        cin >> arr[i].x >> arr[i].y;
-        sort(arr.begin(), arr.end(), cmp);
-        Hull temp;
-        while (arr.size() > 2)
-        {
-            vector<pt> arr1;
-            temp.init(arr);
-            if (temp.poly.size() <= 2)
-                break;
-            v.pb(temp);
-            autoit(arr, it) {
-                if (temp.isInside(*it) == -1)
-                    arr1.pb(*it);
-            }
-            arr = arr1;
-        }
-
-        ll siz = v.size();
-
-        while (q--)
-        {
-            ll x, y;
-            cin >> x >> y;
-            pt p(x, y);
-
-            if (v.size() == 0)
-            {
-                cout << 0 << '\n';
-                continue;
-            }
-
-            ll start = 0;
-            ll end = siz - 1;
-            ll hi = 0;
-            while (end >= start)
-            {
-                ll mid = (start + end) / 2;
-                if (v[mid].isInside(p) == -1)
-                {
-                    hi = mid + 1;
-                    start = mid + 1;
-                }
-
-                else end = mid - 1;
-            }
-            cout << hi << "\n";
-        }
+        ll l,r;
+        cin>>l>>r;
+        l--,r--;
+        Hull h = que(st, 0, n-1, l, r, 0);
+        cout<<dis(h)<<'\n';
     }
+        
+        
+    
 
     return 0;
 }
-
 
