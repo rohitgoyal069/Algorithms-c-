@@ -11,7 +11,7 @@ typedef long double ld;
 #define ss second
 #define mod 1000000007
 #define pii pair<ll,ll>
-#define inf 1000000000000000000
+#define inf 4000000000000000000
 #define bpc(x) __builtin_popcountll(x)
 #define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
 #define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
@@ -38,6 +38,7 @@ struct pt {
     ll cross(const pt & a, const pt & b) const { return (a - *this).cross(b - *this); }
     ll dot(const pt & a, const pt & b) const { return (a - *this).dot(b - *this); }
     ll sqrLen() const { return this->dot(*this); }
+    ll slen(const pt &b) const {pt temp = *this - b; return temp.sqrLen();}
     bool operator < (const pt& b) {
         return (*this).x < b.x || ((*this).x == b.x && (*this).y < b.y);
     }
@@ -63,7 +64,8 @@ class Hull {
     public:
     vector<pt> poly;
     vector<pt> pts;
-    ll n;
+    set<pt> st;
+    int n;
     ll top;
 
     int sgn(ll val) {
@@ -93,7 +95,7 @@ class Hull {
         
     }
     
-    void init(vector<pt>& a, bool sorted) {
+    void init(vector<pt> a, bool sorted) {
 
         poly.clear();
         pts.clear();
@@ -133,11 +135,13 @@ class Hull {
         for (int i = (int) up.size() - 2; i > 0; i--)
             poly.pb(up[i]);
             
-        if(up.size()>1){    
-            pts.resize(poly.size());
-            merge(up.begin()+1, up.end()-1, down.begin(), down.end(), pts.begin()); 
-        }
-        else pts = a;    
+         if(up.size()>1){    
+             pts.resize(poly.size());
+             merge(up.begin()+1, up.end()-1, down.begin(), down.end(), pts.begin()); 
+         }
+        
+         else pts = a;    
+        
         
         n = poly.size();
 
@@ -167,81 +171,71 @@ class Hull {
         hull.init(v,true);
         return hull;
     }
+    
+    pair<ll,pair<int,int>> maxdis()
+    {
+        pair<ll,pair<int,int>> ans = mp(0,mp(-1,-1));
+        if(poly.size()<2)
+            return ans;
+        repi(j,2)
+            rep(n)
+                poly.pb(poly[i]);    
+        if(poly.size() == 2)
+            return mp(poly[0].slen(poly[1]), mp(0,1));
+        int ptr = 0;
+        
+        for(int i=0;i<n;i++)
+        {
+            ll ar = 0;
+            int prev = (i-1+n)%n;
+            while(poly[i].slen(poly[ptr+1])>=poly[i].slen(poly[ptr])){
+                ar = poly[i].slen(poly[ptr+1]);
+                //ans = max({ans, mp(poly[i].slen(poly[ptr]),mp(i, ptr)), mp(poly[prev].slen(poly[ptr]),mp(prev, ptr))});
+                ptr++;
+            }
+            
+            ans = max({ans, mp(poly[i].slen(poly[ptr]),mp(i, ptr%n)), mp(poly[prev].slen(poly[ptr]),mp(prev, ptr%n))});
+        }
+        repi(j,2)
+            rep(n)
+                poly.pop_back();  
+        
+        return ans;
+    }
 
 };
-
-void build(vector<Hull> &st, ll l, ll r, ll i, vector<pt> &arr)
-{
-    if(l == r)
-    {
-        vector<pt> temp;
-        temp.pb(arr[l]);
-        st[i].init(temp, true);
-        return;
-    }
-    
-    ll mid = (l+r)/2;
-    build(st, l, mid, 2*i+1, arr);
-    build(st, mid+1, r, 2*i+2, arr);
-    
-    st[i] = merge(st[2*i+1], st[2*i+2]);
-}
-
-Hull que(vector<Hull> &st, ll l, ll r, ll l1, ll r1, ll i)
-{
-    if(l1>r || l>r1)
-        return Hull();
-    if(l1<=l && r1>=r)
-        return st[i];
-    ll mid = (l+r)/2;    
-    Hull lft = que(st, l, mid, l1, r1, 2*i+1);
-    Hull rt = que(st, mid+1, r, l1, r1, 2*i+2);
-    return merge(lft, rt);
-}
-
-ll dis(Hull h)
-{
-    ll dis = 0;
-    ll siz = h.pts.size();
-    rep(siz)
-        for(ll j=i+1;j<siz;j++)
-            dis = max(dis, (h.pts[i]-h.pts[j]).sqrLen());
-    return dis;        
-}
 
 int main()
 {
     FAST/**/
-
-   
+    
     ll n;
     cin>>n;
     
     vector<pt> arr(n);
     rep(n)
         cin>>arr[i].x>>arr[i].y;
-        
-    ll ht = ceil(log2(n));
-    ht = (1ll<<(ht + 1)) - 1;
-    
-    vector<Hull> st(ht);
-    build(st, 0, n-1, 0, arr);
-    
-    ll q;
-    cin>>q;
-    
-    while(q--)
+    vector<ll> ans;
+    Hull hull;
+    hull.init(arr,false);
+    auto pans = hull.maxdis();
+    for(ll i=n-1;i>-1;i--)
     {
-        ll l,r;
-        cin>>l>>r;
-        l--,r--;
-        Hull h = que(st, 0, n-1, l, r, 0);
-        cout<<dis(h)<<'\n';
+        ans.pb(pans.ff);
+        if(arr[i] == hull.poly[pans.ss.ff] || arr[i] == hull.poly[pans.ss.ss])
+        {
+            hull.init(vector<pt>(arr.begin(), arr.begin() + i), false);
+            pans = hull.maxdis();
+        }
     }
-        
+    
+    autoitr(ans,it)
+        cout<<*it<<"\n";
+    
         
     
-
     return 0;
 }
 
+   
+ 
