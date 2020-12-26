@@ -1,0 +1,196 @@
+//https://codeforces.com/contest/837/submission/102361465
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define all(x) x.begin(), x.end()
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+#define N 5000005
+
+class Quer
+{
+    public:
+    ll x1,x2,y1,y2,a,b;
+};
+
+class node
+{
+    public:
+    ll m,c;
+    node(){
+        m = 0;
+        c = 0;
+    }
+    node(const node &a)
+    {
+        m = a.m;
+        c = a.c;
+    }
+    node(ll m, ll c):m(m), c(c){};
+    ll eval(ll x)
+    {
+        return m*x + c;
+    }
+    void comb(node &a)
+    {
+        m+=a.m;
+        c+=a.c;
+    }
+    node comb(node &a, node &b)
+    {
+        return node(a.m+b.m, a.c+b.c);
+    }
+};
+
+class data
+{
+    public:
+    node fun;
+    ll lft, rt;
+    data()
+    {
+        fun = node();
+        lft = -1;
+        rt = -1;
+    }
+};
+
+data mem[N];
+ll idx = 0;
+
+ll add(ll cr, ll l, ll r, ll l1, node val)
+{
+    //cout<<"Adding "<<val.m<<" , "<<val.c<<'\n';
+    if(l1>r || l1<l)
+        return cr;
+    if(l == r)
+    {
+        mem[idx] = mem[cr];
+        cr = idx++;
+        mem[cr].fun.comb(val);
+        return cr;
+    }
+    
+    ll mid = (l+r)/2;
+    mem[idx] = mem[cr];
+    cr = idx++;
+    if(l1<=mid)
+        mem[cr].lft = add(mem[cr].lft, l, mid, l1, val);
+    else mem[cr].rt = add(mem[cr].rt, mid+1, r, l1, val);
+    
+    mem[cr].fun = mem[cr].fun.comb(mem[mem[cr].lft].fun, mem[mem[cr].rt].fun);
+    //cout<<"now = "<<mem[cr].fun.m<<" , "<<mem[cr].fun.c<<"\n";
+    return cr;
+}
+
+ll que(ll cr, ll x, ll l, ll r, ll l1, ll r1)
+{
+    if(l1>r || l>r1 || cr == -1)
+        return 0;
+    if(l>=l1 && r<=r1)
+        return mem[cr].fun.eval(x);
+    ll mid = (l+r)/2;
+    return que(mem[cr].lft, x, l, mid, l1, r1) + que(mem[cr].rt, x, mid+1, r, l1, r1);
+}
+
+ll build(ll l, ll r)
+{
+    if(l == r)
+    {
+        mem[idx] = data();
+        idx++;
+        return idx-1;
+    }
+    
+    ll mid = (l+r)/2;
+    ll cr = idx++;
+    mem[cr] = data();
+    mem[cr].lft = build(l, mid);
+    mem[cr].rt = build(mid+1, r);
+    return cr;
+}
+
+int main()
+{
+  FAST/**/
+  
+  ll n;
+  cin>>n;
+  
+  ll st[n+1];
+  vector<ll> val;
+  set<ll> val1;
+  val1.insert(-1e10);
+  val1.insert(1e10);
+  
+  Quer arr[n];
+  
+  rep(n)
+  {
+      cin>>arr[i].x1>>arr[i].x2>>arr[i].y1>>arr[i].a>>arr[i].b>>arr[i].y2;
+      val1.insert(arr[i].x1), val1.insert(arr[i].x1+1), val1.insert(arr[i].x2), val1.insert(arr[i].x2+1);
+  }
+  autoit(val1,it)
+    val.pb(*it);
+  
+  ll siz = val.size();
+  st[0] = build(0, siz-1);
+  
+  rep(n)
+  {
+      if(i>0)
+            st[i] = st[i-1];
+      ll x1,x2,y1,a,b,y2;
+      x1 = arr[i].x1, x2 = arr[i].x2, y1 = arr[i].y1, a = arr[i].a, b = arr[i].b, y2 = arr[i].y2;
+      //cout<<x1<<" "<<x2<<'\n';
+      x1 = lower_bound(all(val), x1) - val.begin(), x2 = lower_bound(all(val), x2) - val.begin();
+      st[i] = add(st[i], 0, siz-1, 0, node(0,y1));
+      st[i] = add(st[i], 0, siz-1, x1+1, node(a,-y1+b));
+      st[i] = add(st[i], 0, siz-1, x2+1, node(-a, -b+y2));
+  }
+  
+  ll q;
+  cin>>q;
+  
+  ll las = 0;
+  for(ll i=0;i<q;i++)
+  {
+      ll l,r,x;
+      cin>>l>>r>>x;
+      l--, r--;
+      ll x1 = (x+las)%(1000000000);
+      ll id = upper_bound(all(val), x1) - val.begin() - 1;
+      ll rt = que(st[r], x1, 0, siz-1, 0, id);
+      if(l>0)
+        rt -= que(st[l-1], x1, 0, siz-1, 0, id);
+      cout<<rt<<'\n';
+      las = rt;
+  }
+      
+  return 0;
+}
+   
+   
+ 

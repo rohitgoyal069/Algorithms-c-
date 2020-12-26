@@ -1,6 +1,5 @@
 //https://codeforces.com/contest/342/submission/101683932
 //https://codeforces.com/gym/100570/submission/101954670
-//https://www.codechef.com/viewsolution/40694351
 
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
