@@ -1,0 +1,223 @@
+//https://codeforces.com/contest/813/submission/103130513
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef int ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+class data
+{
+    public:
+    ll u, v, ru, rv;
+    bool cu, cv;
+    bool b1, b2;
+    bool ov;
+    data(){}
+    data(ll u, ll v, ll ru, ll rv, bool b1, bool b2, bool ov):u(u),v(v),ru(ru),rv(rv),b1(b1),b2(b2),ov(ov){}
+};
+
+class dsu
+{
+    public:
+    vector<ll> par, rank;   
+    vector<ll> bip;
+    bool ov;
+    ll n;
+    vector<data> ops;
+    
+    inline ll c0(ll x)
+    {
+        return x%n;
+    }
+    
+    inline ll c1(ll x)
+    {
+        return n+(x%n);
+    }
+    
+    inline ll gcol(ll x)
+    {
+        if(x == c0(x))
+            return 0;
+        return 1;    
+    }
+    
+    ll find(ll x)
+    {
+        if(x == par[x])
+            return x;
+        return find(par[x]);
+    }
+    
+    bool unio(ll x1, ll y1)
+    {
+        ll p1 = find(c0(x1)), p2 = find(c1(y1));
+        if(p1 == p2)
+            return false;
+        if(rank[p1]<rank[p2])
+            swap(p1,p2);
+            
+        par[p2] = p1;
+        ops.pb(data(p1,p2,rank[p1],rank[p2],bip[p1],bip[p2],ov)); 
+        rank[p1] = max(rank[p1], rank[p2]+1);
+        bip[p1]&=bip[p2];
+        bip[p1]&=(find(c0(p1)) != find(c1(p1)));
+        
+        ll e1 = find(c1(x1)), e2 = find(c0(y1));
+        if(rank[e1]<rank[e2])
+            swap(e1,e2);
+        ops.pb(data(e1,e2,rank[e1],rank[e2],bip[e1],bip[e2],ov)); 
+        if(e1 != e2){
+            par[e2] = e1;
+            rank[e1] = max(rank[e1], rank[e2]+1);
+            bip[e1]&=bip[e2];
+            bip[e1]&=(find(c0(e1)) != find(c1(e1)));
+        }
+        ov&=(bip[p1]&bip[e1]);
+        
+        return true;
+    }
+    
+    void roll_back()
+    {
+        if(ops.empty())
+            return;
+        rep(2)
+        {
+            ll x = ops.back().u, y = ops.back().v;
+            ll r1 = ops.back().ru, r2 = ops.back().rv;
+            bool b1 = ops.back().b1, b2 = ops.back().b2;
+            par[x] = x, par[y] = y; 
+            ov = ops.back().ov;
+            rank[x] = r1, rank[y] = r2;
+            bip[x] = b1, bip[y] = b2;
+            ops.pop_back();
+        }
+    }
+    
+    void init(ll n)
+    {
+        this->n = n;
+        ov = 1;
+        par = vector<ll>(2*n);
+        rank = vector<ll>(2*n,0);
+        ops.clear();
+        bip = vector<ll>(2*n,1);
+        rep(2*n)
+            par[i] = i;
+    }
+};
+
+class query
+{
+    public:
+    ll u,v;
+    bool undo;
+};
+
+void add(vector<query> st[], ll l, ll r, ll l1, ll r1, query &q, ll i)
+{
+    if(l1>r || l>r1)
+        return;
+    if(l>=l1 && r<=r1)
+    {
+        st[i].pb(q);
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    add(st,l,mid,l1,r1,q,2*i+1);
+    add(st,mid+1,r,l1,r1,q,2*i+2);
+}
+
+void get(dsu &ds, vector<query> st[], ll l, ll r, ll i, vector<bool> &ans)
+{
+    for(auto &x : st[i])
+        x.undo = ds.unio(x.u, x.v);
+    if(l == r)
+        ans[l] = ds.ov;
+    
+    if(l != r)        
+    {
+        ll mid = (l+r)/2;
+        get(ds,st,l,mid,2*i+1,ans);
+        get(ds,st,mid+1,r,2*i+2,ans);
+    }
+    
+    autoitr(st[i],it)
+        if(it->undo)
+            ds.roll_back();
+}
+
+
+int main()
+{
+  FAST/**/
+  
+  ll n,q;
+  cin>>n>>q;
+  
+  pii ed[q];
+  rep(q){
+        cin>>ed[i].ff>>ed[i].ss; 
+  }
+  map<pii,ll> ma;
+  ll ht = ceil(log2(q));
+  ht = (1ll<<(ht+1)) - 1;
+  vector<query> st[ht];
+  dsu ds;
+  ds.init(n);
+  vector<bool> ans(q);
+  rep(q)
+  {
+      if(ma.count(ed[i]))
+      {
+          query q1;
+          q1.u = ed[i].ff, q1.v = ed[i].ss;
+          add(st,0,q-1,ma[ed[i]],i-1,q1,0);
+          ma.erase(ed[i]);
+      }
+      
+      else 
+        ma[ed[i]] = i;
+  }
+  
+  autoit(ma,it)
+  {
+      query q1;
+      q1.u = it->ff.ff, q1.v = it->ff.ss;
+      add(st,0,q-1,it->ss,q-1,q1,0);
+  }
+  
+  get(ds,st,0,q-1,0,ans);
+  rep(q)
+    if(ans[i])
+        cout<<"YES\n";
+    else cout<<"NO\n";    
+    
+  return 0;
+}
+   
+   
+ 
