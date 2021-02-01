@@ -1,0 +1,208 @@
+//https://codeforces.com/contest/940/submission/106149931
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef int ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+ll bsiz;
+#define lim 700
+
+class que
+{
+    public:
+    ll l, r, id, t;
+    
+    que(ll l, ll r, ll id, ll t):l(l), r(r), id(id), t(t) {}
+    
+    bool operator < (const que &q)
+    {
+        if(this->t/bsiz < q.t/bsiz)
+            return 1;
+        if(this->t/bsiz == q.t/bsiz && this->l/bsiz < q.l/bsiz) 
+            return 1;
+        if(this->t/bsiz == q.t/bsiz && this->l/bsiz == q.l/bsiz && this->r<q.r)
+            return 1;
+        return 0;    
+    }
+    
+};
+
+int main()
+{
+  FAST/**/
+  
+  bsiz = 4000;
+  
+  ll n,q;
+  cin>>n>>q;
+  
+  ll arr[n];
+  rep(n)
+        cin>>arr[i];
+  map<ll,ll> comp;
+  rep(n)
+        comp[arr[i]] = 1;
+  pair<ll,pii> quer[q];
+  rep(q){
+        cin>>quer[i].ff>>quer[i].ss.ff>>quer[i].ss.ss;
+        if(quer[i].ff == 2)
+            comp[quer[i].ss.ss] = 1;
+  }
+  
+  ll curr = 0;
+  autoit(comp,it)
+        it->ss = curr++;
+  rep(n)
+        arr[i] = comp[arr[i]];
+  rep(q)
+        if(quer[i].ff == 2)
+            quer[i].ss.ss = comp[quer[i].ss.ss];
+  
+  vector<que> v;
+  vector<pair<ll,pii>> upd;
+  comp.clear();
+  rep(n)
+        comp[i] = arr[i];
+  ll cnt = 0;
+  rep(q)
+  {
+      if(quer[i].ff == 1)
+            v.pb(que(quer[i].ss.ff-1, quer[i].ss.ss-1, i, cnt));
+      else 
+      {
+          cnt++;
+          upd.pb(mp(comp[quer[i].ss.ff-1],mp(quer[i].ss.ff-1, quer[i].ss.ss)));
+          comp[quer[i].ss.ff-1] = quer[i].ss.ss;
+      }
+  }
+  
+  sort(v.begin(), v.end());
+  ll tup = 0, l1 = 0, r1 = 0;
+  
+  ll siz = comp.size();
+  
+  ll ele[n+q+5];
+  memset(ele,0,sizeof(ele));
+  
+  ll fr[n+5];
+  memset(fr,0,sizeof(fr));
+  
+  ele[arr[0]] = 1;
+  fr[1] = 1;
+  map<ll,ll> ans;
+  for(auto &x : v)
+  {
+      ll l = x.l;
+      ll r = x.r;
+      ll t = x.t;
+      while(tup>t)
+      {
+          ll id = upd[tup-1].ss.ff;
+          ll ol = upd[tup-1].ff;
+          ll ne = upd[tup-1].ss.ss;
+          arr[id] = ol;
+          if(l1<=id && r1>=id)
+          {
+              fr[ele[ne]]--;
+              ele[ne]--;
+              fr[ele[ne]]++;
+              
+              fr[ele[ol]]--;
+              ele[ol]++;
+              fr[ele[ol]]++;
+          }
+          tup--;
+      }
+      
+      while(tup<t)
+      {
+          tup++;
+          ll id = upd[tup-1].ss.ff;
+          ll ol = upd[tup-1].ff;
+          ll ne = upd[tup-1].ss.ss;
+          arr[id] = ne;
+          if(l1<=id && r1>=id)
+          {
+              fr[ele[ol]]--;
+              ele[ol]--;
+              fr[ele[ol]]++;
+              
+              fr[ele[ne]]--;
+              ele[ne]++;
+              fr[ele[ne]]++;
+          }
+      }
+      
+      while(l1>l)
+      {
+          l1--;
+          fr[ele[arr[l1]]]--;
+          ele[arr[l1]]++;
+          fr[ele[arr[l1]]]++;   
+      }
+      
+      while(r1<r)
+      {
+          r1++;
+          fr[ele[arr[r1]]]--;
+          ele[arr[r1]]++;
+          fr[ele[arr[r1]]]++;   
+      }
+      
+      while(l1<l)
+      {
+          fr[ele[arr[l1]]]--;
+          ele[arr[l1]]--;
+          fr[ele[arr[l1]]]++; 
+          l1++;
+      }
+      
+      while(r1>r)
+      {
+          fr[ele[arr[r1]]]--;
+          ele[arr[r1]]--;
+          fr[ele[arr[r1]]]++;   
+          r1--;
+      }
+      
+      for(ll j=1;j<lim;j++)
+      {
+          if(fr[j] == 0)
+          {
+              ans[x.id] = j;
+              break;
+          }
+      }
+  }
+  
+  autoit(ans,it)    
+        cout<<it->ss<<'\n';
+    
+  return 0;
+}
+   
+   
+ 
