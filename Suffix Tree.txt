@@ -1,4 +1,4 @@
-//https://www.codechef.com/submit/complete/44352926
+//https://www.codechef.com/viewsolution/44352926
 
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
