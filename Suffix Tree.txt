@@ -77,7 +77,7 @@ public:
     void substringCount(ll id, ll clen)
     {
         if (t[id].next.size() == 0)
-            t[id].lensum = (clen * (clen - 1)) / 2, t[id].subcnt = (clen > 1);
+            t[id].lensum = (clen * (clen - 1)) / 2, t[id].subcnt = (clen > 1 || t[id].par > 0);
         autoit(t[id].next, it)
         {
             ll l = t[it->ss].len();
@@ -263,5 +263,3 @@ int main()
 
     return 0;
 }
-
-
