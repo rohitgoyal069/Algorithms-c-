@@ -1,4 +1,5 @@
-//https://www.codechef.com/viewsolution/44352926
+//https://www.codechef.com/viewsolution/44463326
+//https://codeforces.com/contest/128/submission/111826807
 
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
@@ -30,6 +31,7 @@ mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 //There are around 2*N nodes in the suffix tree
 //Each node has atleast 2 children or it is a leaf node
 //There are atmost alphabet size( ~ 26 ) children for each node
+//Number of distinct substrings = sum of length of all edges in the tree
 
 struct node {
     ll l, r;                                // [L, R-1] boundry for the edge to this node
@@ -41,7 +43,7 @@ struct node {
 
     node (ll l = 0, ll r = 0, ll par = -1)
         : l(l), r(r), par(par), link(-1), lensum(0), subcnt(0) {}
-    ll len()  {  return r - l;  }
+    ll len()  {  return max(r - l, 0ll);  }
     ll &get (char c) {
         if (!next.count(c))  next[c] = -1;
         return next[c];
@@ -62,28 +64,58 @@ public:
     ll n;                   //size of the string
     state ptr;
     ll sz;                  //size - 1 for vector t
+    ll subs;                //number of substrings in the string
+    ll leaves;
+    bool append;
+    char def;
+    ll lid, rid;
 
-    SuffTree(string s)
+    
+    SuffTree(string s, bool append = true, char def = '$')
     {
+        lid = 0, rid = 0;
+        this->sz = 1;
+        this->append = append;
+        this->def = def;
+        leaves = subs = 0;
         this->s = s;
-        this->s += '$';
+        if (append) {
+            this->s += def;
+        }
         this->n = this->s.length();
+        
+        
+        
         ptr = state(0, 0);
-        t = vector<node>(2);
+        t = vector<node>(3*(this->n) + 10, node());
         build_tree();
+        if (append){
+            subs -= ((ll)s.length());
+            this->s.pop_back();
+            this->n = this->s.length();
+        }
         substringCount(0, 0);
+    }
+
+    void build_tree() {
+
+        this->sz = 1;
+        for (ll i = 0; i < n; ++i)
+            tree_extend (i);
     }
 
     void substringCount(ll id, ll clen)
     {
         if (t[id].next.size() == 0)
-            t[id].lensum = (clen * (clen - 1)) / 2, t[id].subcnt = (clen > 1 || t[id].par > 0);
+            t[id].lensum = 0, t[id].subcnt = (clen > 0 || t[id].par > 0);
         autoit(t[id].next, it)
         {
+            if(t[it->ss].next.size() == 0)
+                t[it->ss].r = s.length();
             ll l = t[it->ss].len();
             substringCount(it->ss, clen + l);
-            t[id].lsum[it->ff] = t[it->ss].lensum, t[id].lensum += t[it->ss].lensum;
-            t[id].scnt[it->ff] = t[it->ss].subcnt, t[id].subcnt += t[it->ss].subcnt;
+            t[id].lsum[it->ff] = t[it->ss].lensum + t[it->ss].len()*t[it->ss].subcnt, t[id].lensum += t[id].lsum[it->ff];
+            t[id].scnt[it->ff] = t[it->ss].subcnt, t[id].subcnt += t[id].scnt[it->ff];
         }
     }
 
@@ -110,7 +142,6 @@ public:
         if (st.pos == 0)
             return t[st.v].par;
         node v = t[st.v];
-        t.pb(node());
         ll id = sz++;
         t[id] = node (v.l, v.l + st.pos, v.par);
         t[v.par].get( s[v.l] ) = id;
@@ -132,26 +163,21 @@ public:
             state nptr = go (ptr, pos, pos + 1);
             if (nptr.v != -1) {
                 ptr = nptr;
-                return;
+                break;
             }
 
             ll mid = split (ptr);
-            t.pb(node());
             ll leaf = sz++;
-            t[leaf] = node (pos, n, mid);
+            leaves++;
+            t[leaf] = node (pos, n , mid);
             t[mid].get( s[pos] ) = leaf;
 
             ptr.v = get_link (mid);
             ptr.pos = t[ptr.v].len();
             if (!mid)  break;
         }
-    }
 
-    void build_tree() {
-
-        this->sz = 1;
-        for (ll i = 0; i < n; ++i)
-            tree_extend (i);
+        subs += leaves;
     }
 
     ll search(string p)
@@ -181,84 +207,75 @@ public:
         return -1;
     }
 
-    char findRecKth(ll id, ll k, vector<ll> &hold, ll off)
+    void findRecKth(ll id, ll k, vector<ll> &hold, string &fin, ll off)
     {
         autoit(t[id].next, it)
         {
-            if (it->ff == '$')
+            if (it->ff == def)
                 continue;
-            if (t[id].lsum[it->ff] - (off * (off + 1)*t[it->ss].subcnt) / 2 < k)
+            if(t[id].lsum[it->ff] < k)
             {
-                k -= (t[id].lsum[it->ff] - (off * (off + 1) * t[it->ss].subcnt) / 2);
+                k -= t[id].lsum[it->ff];
                 continue;
             }
-
-            ll l = t[it->ss].len();
-            if (t[it->ss].next.size() == 0)
-                l--;
-
+            
             hold.pb(it->ss);
-
-            if (k > t[it->ss].subcnt * (off * l + (l * (l + 1)) / 2)) {
-                k -= (t[it->ss].subcnt * (off * l + (l * (l + 1)) / 2));
-                return findRecKth(it->ss, k, hold, off + l);
-            }
-
-            ll st = 0, en = l - 1, hi = 0;
-            while (en >= st)
+            
+            ll len = t[it->ss].len();
+            
+            if(len*t[it->ss].subcnt >= k)
             {
-                ll mid = (st + en) / 2;
-                if ((off * mid + (mid * (mid + 1)) / 2)*t[it->ss].subcnt < k)
-                    hi = mid, st = mid + 1;
-                else en = mid - 1;
+                ll al = (k-1)/t[it->ss].subcnt;
+                off += al + 1;
+                autoit(hold, it)
+                {
+                    ll l = min(t[*it].len(), off);
+                    off-=l;
+                    fin+=s.substr(t[*it].l, l);
+                }
+                return;
             }
-
-            k -= (t[it->ss].subcnt * (off * hi + (hi * (hi + 1)) / 2));
-            k -= ((hi + 1 + off) * ((k - 1) / (hi + 1 + off)));
-
-            autoit(hold, it)
-            {
-                ll i = (*it);
-                if (t[i].len() >= k)
-                    return s[t[i].l + k - 1];
-                k -= t[i].len();
-            }
+            
+            k -= len*t[it->ss].subcnt;
+            off+=len;
+            findRecKth(it->ss, k, hold, fin, off);
+            return;
 
         }
 
-        return 'a';
     }
 
-    char findKth(ll k)
+    void findKth(ll k, string &f)
     {
         vector<ll> hold;
-        return findRecKth(0, k, hold, 0);
+        findRecKth(0, k, hold, f, 0);
     }
 };
+
 
 int main()
 {
     FAST/**/
 
     string s;
-    cin >> s;
-
-    SuffTree ob(s);
-
-    ll q;
-    cin >> q;
-
-    ll sum = 0;
-
-    while (q--)
+    cin>>s;
+    
+    ll k;
+    cin>>k;
+    
+    ll n = s.length();
+    
+    SuffTree obj(s);
+    if(k > (n*(n+1))/2)
+            cout<<"No such line.\n";
+    else 
     {
-        ll p, m;
-        cin >> p >> m;
-        ll k = ((sum % m) * (p % m)) % m + 1;
-        char c = ob.findKth(k);
-        cout << c << '\n';
-        sum += c;
+        string f;
+        obj.findKth(k,f);
+        cout<<f<<"\n";
     }
+    
+
 
 
     return 0;
