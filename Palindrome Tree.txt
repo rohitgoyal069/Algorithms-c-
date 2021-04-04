@@ -1,3 +1,5 @@
+//https://ideone.com/YQX9jv
+
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef long long ll;
@@ -25,23 +27,27 @@ using namespace __gnu_pbds;
 using namespace std;
 mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
+//Palindrome tree contains 2 roots : root 0 for even length palindromes and root 1 for odd length palindromes
+//Root 1 is the link of Root 0
+//Each edge correspond to a character in the tree and the string is built from inside out from top to bottom
+//A string can contain at most N distinct palindromes, hence atmost N+2 nodes in Palindrome Tree (2 roots + N nodes)
 
 class PalindromeTree {
 
 public:
-    vector<ll> s, len, link;
-    vector<map<ll, ll>> to;
-    string str;
+    vector<ll> s, len, link;        //s -> string built till now, len[i] -> length of node[i] as a palindrome, link -> link for each node
+    vector<map<ll, ll>> to;         //to[char] -> chain for character char
+    string str;                     //original string
     ll length;
-    ll n, last, sz;
-    ll distinct;
+    ll n, last, sz;                 //n -> string counter, last -> last state, sz -> to allocate new node
+    ll distinct;                    //Number of distinct palindromes till now
 
     void init()
     {
         s = len = link = vector<ll>(length + 10, 0);
         to = vector<map<ll, ll>>(length + 10);
         n = 0, last = 0, sz = distinct = 0;
-        s[n++] = -1;
+        s[n++] = -1;                                //Append -1 to beginning of string to make root 1 a default palindrome
         link[0] = 1;
         len[1] = -1;
         sz = 2;
