@@ -1,0 +1,90 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+
+class PalindromeTree {
+
+public:
+    vector<ll> s, len, link;
+    vector<map<ll, ll>> to;
+    string str;
+    ll length;
+    ll n, last, sz;
+    ll distinct;
+
+    void init()
+    {
+        s = len = link = vector<ll>(length + 10, 0);
+        to = vector<map<ll, ll>>(length + 10);
+        n = 0, last = 0, sz = distinct = 0;
+        s[n++] = -1;
+        link[0] = 1;
+        len[1] = -1;
+        sz = 2;
+    }
+
+    PalindromeTree(string s)
+    {
+        str = s;
+        length = s.length();
+        init();
+        for (auto x : str)
+            add_letter(x);
+    }
+
+    ll get_link(ll v)
+    {
+        while (s[n - len[v] - 2] != s[n - 1]) v = link[v];
+        return v;
+    }
+
+    void add_letter(ll c)
+    {
+        s[n++] = c;
+        last = get_link(last);
+        if (!to[last][c])
+        {
+            len [sz] = len[last] + 2;
+            link[sz] = to[get_link(link[last])][c];
+            to[last][c] = sz++;
+            distinct++;
+        }
+        last = to[last][c];
+    }
+};
+
+int main()
+{
+    FAST/**/
+
+
+
+
+    return 0;
+}
+
+
