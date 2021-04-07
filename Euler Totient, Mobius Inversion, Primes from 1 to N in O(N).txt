@@ -37,7 +37,7 @@ void calc(ll n)
     primes.clear();
     vector<ll> nums(n + 1);
     nums[1] = 1;
-    f[1] = 1;
+    f[1] = 1;                                   ////!!!!!HANDLE THIS CASE FOR A FUNCTION
 
     bool isp[n + 1];
     rep(n + 1)
