@@ -1,3 +1,5 @@
+//https://www.codechef.com/viewsolution/44723407
+
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef long long ll;
@@ -25,13 +27,17 @@ using namespace __gnu_pbds;
 using namespace std;
 mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
-vector<ll> mu, phi, primes;
+vector<ll> mu, phi, primes, f;
 
 void calc(ll n)
 {
     mu.resize(n + 1);
     phi.resize(n + 1);
+    f.resize(n + 1);
     primes.clear();
+    vector<ll> nums(n + 1);
+    nums[1] = 1;
+    f[1] = 1;
 
     bool isp[n + 1];
     rep(n + 1)
@@ -45,31 +51,64 @@ void calc(ll n)
             phi[i] = i - 1;
             primes.pb(i);
             mu[i] = -1;
+            nums[i] = i;
+            f[i] = 1 + (phi[i] * i);                ////!!!!!HANDLE THIS CASE FOR A FUNCTION
+            //When number is a prime
         }
 
         ll tmp = n / i;
 
         for (ll j = 0; j < primes.size() && primes[j] <= tmp; j++)
         {
-            isp[primes[j]*i] = false;
+            ll curr = primes[j] * i;
+            isp[curr] = false;
             if (i % primes[j] == 0)
             {
-                phi[i * primes[j]] = primes[j] * phi[i];
-                mu[i * primes[j]] = 0;
+                nums[curr] = nums[i] * primes[j];
+                phi[curr] = primes[j] * phi[i];
+                mu[curr] = 0;
+                if (curr == nums[curr])
+                    f[curr] = f[i] + phi[curr] * curr;                           //!!!!!HANDLE THIS CASE FOR A FUNCTION
+                //when number is some power(>=2) of primes[j]
+                else f[curr] = f[curr / nums[curr]] * f[nums[curr]];            //when there are at least 2 primes and power of primes[j] is atleast 2 in curr
                 break;
             }
 
-            mu[i * primes[j]] = (mu[i] * mu[primes[j]]);
-            phi[i * primes[j]] = (phi[i] * phi[primes[j]]);
+            nums[curr] = primes[j];
+            mu[curr] = (mu[i] * mu[primes[j]]);
+            phi[curr] = (phi[i] * phi[primes[j]]);
+            f[curr] = (f[primes[j]] * f[i]);                                //When number has only single power of this prime
         }
     }
 
+}
+
+ll get(ll n)
+{
+    ll sum = 0;
+    for (ll i = 1; i <= n; i++)
+        sum += (n / (__gcd(i, n)));
+    return sum;
 }
 
 int main()
 {
     FAST/**/
 
+
+    ll t;
+    cin >> t;
+
+    calc(1e7);
+
+    while (t--)
+    {
+        ll n;
+        cin >> n;
+
+        cout << f[n] << '\n';
+
+    }
 
     return 0;
 }
