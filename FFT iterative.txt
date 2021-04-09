@@ -9,21 +9,94 @@ typedef long double ld;
 #define ff first
 #define ss second
 #define mod 1000000007
-#define inf 1000000000000000
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
 #define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
 #define rep(n) for(ll i = 0; i < n; i++)
 #define repi(i,n) for(ll i = 0; i < n; i++)
 
-#include <ext/pb_ds/assoc_container.hpp> 
-#include <ext/pb_ds/tree_policy.hpp> 
-using namespace __gnu_pbds; 
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
 
-#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
 
 using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
-using cd = complex<double>;
-const double PI = acos(-1);
+ll powa(ll a, ll b, ll c)
+{
+    a %= c;
+    if (a < 0)
+        a += c;
+    ll res = 1;
+    while (b > 0)
+    {
+        if (b & 1)
+            res *= a, res %= c;
+        a *= a, a %= c;
+        b >>= 1;
+    }
+    return res;
+}
+
+ll norm(ll a)
+{
+    a %= mod;
+    if (a < 0)
+        a += mod;
+    return a;
+}
+
+ll add(ll a, ll b)
+{
+    a = norm(a);
+    b = norm(b);
+    return norm(a + b);
+}
+
+ll mul(ll a, ll b)
+{
+    a = norm(a);
+    b = norm(b);
+    return norm(a * b);
+}
+
+
+ll sub(ll a, ll b)
+{
+    a = norm(a);
+    b = norm(b);
+    return norm(a - b);
+}
+
+ll divi(ll a, ll b)
+{
+    b = powa(b, mod - 2, mod);
+    return mul(a, b);
+}
+
+#define N 200005
+
+ll fact[N];
+ll ifact[N];
+
+ll ncr(ll n, ll r)
+{
+    if (r > n)
+        return 0;
+    ll ans = fact[n];
+    ans *= ifact[r];
+    ans %= mod;
+    ans *= ifact[n - r];
+    ans %= mod;
+    return ans;
+}
+
+using cd = complex<ld>;
+const ld PI = acos(-1);
+const ll part = 65535;
 
 void fft(vector<cd> & a, bool invert) {
     ll n = a.size();
@@ -39,14 +112,14 @@ void fft(vector<cd> & a, bool invert) {
     }
 
     for (ll len = 2; len <= n; len <<= 1) {
-        double ang = 2 * PI / len * (invert ? -1 : 1);
+        ld ang = 2 * PI / len * (invert ? -1 : 1);
         cd wlen(cos(ang), sin(ang));
         for (ll i = 0; i < n; i += len) {
             cd w(1);
             for (ll j = 0; j < len / 2; j++) {
-                cd u = a[i+j], v = a[i+j+len/2] * w;
-                a[i+j] = u + v;
-                a[i+j+len/2] = u - v;
+                cd u = a[i + j], v = a[i + j + len / 2] * w;
+                a[i + j] = u + v;
+                a[i + j + len / 2] = u - v;
                 w *= wlen;
             }
         }
@@ -58,13 +131,7 @@ void fft(vector<cd> & a, bool invert) {
     }
 }
 
-vector<ll> multiply(vector<ll> const& a, vector<ll> const& b) {
-    vector<cd> fa(a.begin(), a.end()), fb(b.begin(), b.end());
-    ll n = 1;
-    while (n < a.size() + b.size()) 
-        n <<= 1;
-    fa.resize(n);
-    fb.resize(n);
+vector<ll> mult(vector<cd> fa, vector<cd> fb, ll n) {
 
     fft(fa, false);
     fft(fb, false);
@@ -76,16 +143,85 @@ vector<ll> multiply(vector<ll> const& a, vector<ll> const& b) {
     for (ll i = 0; i < n; i++)
     {
         result[i] = round(fa[i].real());
-        result[i]%=mod;
+        result[i] %= mod;
     }
+
     return result;
+}
+
+vector<ll> multiply(vector<ll> const& a, vector<ll> const& b)
+{
+    vector<cd> fa(a.size()), fa1(a.size()), fb(b.size()), fb1(b.size());
+    ll tmp = (part * part) % mod;
+    rep(a.size())
+    fa[i] = (a[i] % part), fa1[i] = a[i] / part;
+    rep(b.size())
+    fb[i] = (b[i] % part), fb1[i] = b[i] / part;
+
+    ll n = 1;
+    while (n < a.size() + b.size())
+        n <<= 1;
+
+    fa.resize(n), fa1.resize(n);
+    fb.resize(n), fb1.resize(n);
+
+    vector<ll> aa1 = mult(fa, fb, n);
+    vector<ll> bb1 = mult(fa1, fb1, n);
+
+    rep(n)
+    fa[i] += fa1[i], fb[i] += fb1[i];
+    vector<ll> cc1 = mult(fa, fb, n);
+    rep(n) {
+        cc1[i] = sub(cc1[i], add(aa1[i], bb1[i]));
+        cc1[i] = add(add(aa1[i], mul(tmp, bb1[i])), mul(part, cc1[i]));
+    }
+    while (cc1.size() > 1 && cc1.back() == 0)
+        cc1.pop_back();
+    return cc1;
 }
 
 int main()
 {
-   FAST/**/
-   
-   
-   return 0;        
-}  
+    FAST/**/
+
+    ll a, k;
+    cin >> a >> k;
+
+    fact[0] = 1;
+    for (ll i = 1; i < N; i++)
+        fact[i] = fact[i - 1] * i, fact[i] %= mod;
+    for (ll i = 0; i < N; i++)
+        ifact[i] = powa(fact[i], mod - 2, mod);
+
+    vector<ll> d(a + 1, 0);
+    d[1] = 0;
+    d[0] = 1;
+    for (ll i = 2; i < a + 1; i++)
+        d[i] = add(d[i - 1], mul((i % 2 == 0) ? 1 : -1, ifact[i]));
+    vector<ll> poly(a + 1, 0);
+    for (ll i = k; i < a + 1; i++)
+        poly[i] = ifact[i];
+
+    poly = multiply(poly, d);
+    ll i2 = powa(2, mod - 2, mod);
+
+    for (ll i = k; i < min((ll)poly.size(), a + 1); i++)
+    {
+        poly[i] = mul(sub(fact[i] * poly[i], 1), fact[i]);
+        poly[i] = mul(poly[i], i2);
+    }
+
+    for (ll i = 1; i <= a; i++)
+    {
+        if (i < poly.size())
+            cout << poly[i] << " ";
+        else cout << 0 << " ";
+    }
+
+    return 0;
+}
+
+
+
+
    
