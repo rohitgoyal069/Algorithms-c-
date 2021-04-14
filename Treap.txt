@@ -1,0 +1,169 @@
+//https://codeforces.com/gym/102787/submission/113046897
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+typedef struct item * pitem;
+struct item {
+    ll prior, value, cnt;
+    bool rev;
+    pitem l, r;
+    item(){}
+    item(ll prior, ll value):prior(prior), value(value), cnt(0), l(NULL), r(NULL){}
+};
+
+class Treap{
+    
+    public:
+    pitem root;
+    Treap()
+    {
+        root = NULL;
+    }
+    
+    ll cnt (pitem it) {
+        return it ? it->cnt : 0;
+    }
+    
+    void upd_cnt (pitem it) {
+        if (it)
+            it->cnt = cnt(it->l) + cnt(it->r) + 1;
+    }
+    
+    void insert (pitem & t, pitem it, ll key, ll add = 0) {                     //Insert a value at index i and shift all previous values at >=i to the right
+        if (!t){
+            t = it;
+            upd_cnt(t);
+            return;
+        }
+        push(t);
+        ll cur_key = add + cnt(t->l);
+        
+        if (it->prior > t->prior)
+            split (t, it->l, it->r, key - add, 0),  t = it;
+        else
+        {
+            if(key <= cur_key)
+                insert(t->l, it, key, add);
+            else insert(t->r, it, key, cur_key + 1);    
+        }
+        upd_cnt(t);
+    }
+    
+    void push (pitem it) {
+        if (it && it->rev) {
+            it->rev = false;
+            swap (it->l, it->r);
+            if (it->l)  it->l->rev ^= true;
+            if (it->r)  it->r->rev ^= true;
+        }
+    }
+    
+    void merge (pitem & t, pitem l, pitem r) {
+        push (l);
+        push (r);
+        if (!l || !r)
+            t = l ? l : r;
+        else if (l->prior > r->prior)
+            merge (l->r, l->r, r),  t = l;
+        else
+            merge (r->l, l, r->l),  t = r;
+        upd_cnt (t);
+    }
+    
+    void split (pitem t, pitem & l, pitem & r, ll key, ll add = 0) {                    //Splits into 2 treaps with range [0,key-1] and [key,inf]
+        if (!t)
+            return void( l = r = 0 );
+        push (t);
+        ll cur_key = add + cnt(t->l);
+        if (key <= cur_key)
+            split (t->l, l, t->l, key, add),  r = t;
+        else
+            split (t->r, t->r, r, key, add + 1 + cnt(t->l)),  l = t;
+        upd_cnt (t);
+    }
+    
+    void reverse (pitem t, ll l, ll r) {
+        pitem t1, t2, t3;
+        split (t, t1, t2, l);
+        split (t2, t2, t3, r-l+1);
+        t2->rev ^= true;
+        merge (t, t1, t2);
+        merge (t, t, t3);
+    }
+    
+    void output (pitem t) {
+        if (!t)  return;
+        push (t);
+        output (t->l);
+        printf ("%d ", t->value);
+        output (t->r);
+    }
+};
+
+int main()
+{
+  FAST/**/
+  
+  ll n;
+  cin>>n;
+  
+  Treap tr;
+  item arr[n];
+  rep(n){
+        arr[i] = item(mt(), i+1);
+        tr.insert(tr.root, &arr[i], i, 0);
+  }
+          
+  rep(n)
+  {
+      ll a,b;
+      cin>>a>>b;
+      ll len = min(b-a, n-b+1);
+      a--, b--;
+      if(len < 1)
+          continue;
+      pii fst = {a, a+len-1}, sec = {b, b+len-1};
+      pitem lft, mid, c1, c2, rt;
+      tr.split(tr.root, lft, c1, a, 0);                    //lft(0,a1-1), c1(a1,n-1)
+      tr.split(c1, c1, c2, len, 0);                        //lft(0,a1-1), c1(a1,a2), c2(a2+1,n-1)
+      tr.split(c2, mid, c2, max(sec.ff-1-fst.ss, 0ll), 0); //lft(0,a1-1), c1(a1,a2), mid(a2+1,b1-1), c2(b1,n-1)
+      tr.split(c2, c2, rt, len, 0);                        //lft(0,a1-1), c1(a1,a2), mid(a2+1,b1-1), c2(b1,b2), rt(b2+1,n-1)
+      tr.merge(tr.root, lft, c2);
+      tr.merge(tr.root, tr.root, mid);
+      tr.merge(tr.root, tr.root, c1);
+      tr.merge(tr.root, tr.root, rt);
+      
+  }
+  
+  tr.output(tr.root);
+    
+  return 0;
+}
+   
+   
+ 
