@@ -1,0 +1,247 @@
+//https://atcoder.jp/contests/abc198/submissions/21921910
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 998244353
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+class cube{
+    public:
+    ll back, front;
+    vector<ll> hor, ver;
+    
+    cube()
+    {
+        back = 5;
+        front = 0;
+        hor = {1ll,0ll,2ll};
+        ver = {3ll,0ll,4ll};
+    }
+    
+    void rotH()
+    {
+        ll temp = back;
+        front = hor[0];
+        back = hor.back();
+        hor.pop_back();
+        hor.insert(hor.begin(),temp);
+        ver[1] = front;
+    }
+    
+    void rotV()
+    {
+        ll temp = back;
+        front = ver[0];
+        back = ver.back();
+        ver.pop_back();
+        ver.insert(ver.begin(),temp);
+        hor[1] = front;
+    }
+    
+    void print()
+    {
+        cout<<"front = "<<front<<"\n";
+        cout<<"back = "<<back<<"\n";
+        autoit(hor,it)
+            cout<<*it<<" ";
+        cout<<"\n";
+        autoit(ver,it)
+            cout<<*it<<" ";
+        cout<<"\n";        
+    }
+    
+    void flip()
+    {
+        swap(hor,ver);
+        reverse(hor.begin(), hor.end());
+    }
+};
+
+ll find(ll x, ll par[])
+{
+    if(x == par[x])
+        return x;
+    return par[x] = find(par[x], par);
+}
+ 
+void unio(ll x, ll y, ll par[], ll rank[])
+{
+    x = find(x,par);
+    y = find(y,par);
+    if(x == y)
+        return;
+    if(rank[x]>rank[y])
+    {
+        //siz[x]+=siz[y];
+        rank[x] = max(rank[x], rank[y] + 1);
+        par[y] = x;
+    }
+    
+    else
+    {
+       // siz[y]+=siz[x];
+        rank[y] = max(rank[y], rank[x] + 1);
+        par[x] = y;
+    }
+}
+
+ll powa(ll a, ll b, ll c)
+{
+    a%=c;
+    if(a<0)
+	a+=c;
+    ll res = 1;
+    while(b>0)
+    {
+        if(b&1)
+            res*=a, res%=c;
+        a*=a, a%=c;
+        b>>=1;
+    }
+    return res;
+}
+
+#define N 6
+
+void mul(ll res[N][N], ll m1[N][N], ll m2[N][N])
+{
+    ll temp[N][N];
+    memset(temp,0,sizeof(temp));
+    for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            for(ll k=0;k<N;k++)
+            {
+                temp[i][j]+=(m1[i][k]*m2[k][j])%mod;
+                temp[i][j]%=mod;
+            }
+    for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            res[i][j] = temp[i][j];
+                
+}
+
+void powam(ll mat[N][N], ll n)
+{
+   ll res[N][N];
+   memset(res,0,sizeof(res));
+   for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            if(i == j)
+                res[i][j] = 1;
+   
+   while(n>0)
+   {
+       if(n%2 == 1)
+           mul(res,res,mat);
+       
+       n>>=1;
+       mul(mat,mat,mat);
+   }
+   
+   for(ll i=0;i<N;i++)
+        for(ll j=0;j<N;j++)
+            mat[i][j] = res[i][j];
+    
+}
+
+int main()
+{
+  FAST/**/
+  
+  ll p2[60];
+  p2[0] = 1;
+  for(ll i=1;i<60;i++)
+        p2[i] = (p2[i-1]*2);
+  
+  ll s;
+  cin>>s;
+  
+  cube c,c1;
+  map<vector<vector<ll>>,vector<ll>> ma;
+  ll tot = 0;
+  for(ll i=0;i<4;i++){
+        c1.rotH();
+        for(ll j=0;j<4;j++){
+            c1.rotV();
+            for(ll k=0;k<4;k++){
+                c1.flip();
+                ll cc = 0;
+                ll par[6], rank[6];
+                rep(6)
+                    par[i] = i, rank[i] = 0;
+                unio(c1.front,c.front,par,rank);  
+                unio(c1.back,c.back,par,rank);  
+                repi(id,3)
+                        unio(c1.hor[id], c.hor[id], par, rank);
+                repi(id,3)
+                        unio(c1.ver[id], c.ver[id], par, rank);
+                map<ll,ll> m1;
+                rep(6)
+                        m1[find(i,par)]++;
+                vector<ll> fr;        
+                autoit(m1,it) 
+                    fr.pb(it->ss);
+                cc = m1.size();
+                ma[{{c1.front},{c1.back},c1.hor,c1.ver}] = fr;
+            }
+        }
+  }
+   //cout<<ma.size()<<'\n';            
+   autoit(ma,it)
+   {
+       vector<ll> &fr = it->ss;
+       ll mat[N][N];
+       memset(mat,0,sizeof(mat));
+       for(ll i=1;i<N;i++)
+            mat[i][i-1] = 1;
+       ll siz = fr.size();
+       ll lim = (1ll<<(siz));
+       for(ll mask=1;mask<lim;mask++)
+       {
+           ll sum = 0;
+           for(ll j=0;j<siz;j++)
+           {
+               if(p2[j]&mask)
+                   sum += fr[j];
+           }
+           if(bpc(mask)%2)
+                mat[0][sum-1] = (mat[0][sum-1] + 1)%mod;
+           else mat[0][sum-1] = (mat[0][sum-1] - 1 + mod)%mod;           
+       }
+       powam(mat,s-6);
+       tot = (tot + mat[0][0])%mod;
+   }
+   
+   ll siz = ma.size();
+   
+   tot = (tot*powa(siz,mod-2,mod))%mod;
+   cout<<tot<<"\n";
+  
+  
+  return 0;
+}
+   
+   
+ 
