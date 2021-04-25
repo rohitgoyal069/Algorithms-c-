@@ -86,6 +86,7 @@ public:
             sa_extend(x);
         getCnt(0);
         makeLinkGraph();
+        eposdfs(0);
     }
 
     void makeLinkGraph()
@@ -105,8 +106,15 @@ public:
                 getCnt(it->ss);
             st[curr].cnt += st[it->ss].cnt;
         }
-        if (st[curr].link != -1)
-            st[st[curr].link].endpos += st[curr].endpos;
+    }
+
+    void eposdfs(ll curr)
+    {
+        autoit(gr[curr], it)
+        {
+            eposdfs(*it);
+            st[curr].endpos += st[*it].endpos;
+        }
     }
 
     vector<ll> getOccEnding(ll id)
@@ -216,19 +224,33 @@ int main()
 {
     FAST/**/
 
-    ll t = 1;
+    string s;
+    cin >> s;
 
-    while (t--)
+    ll n = s.length();
+    vector<ll> ins[n + 2], rem[n + 2];
+    SAutomata ob(s);
+    for (ll i = 1; i < ob.sz; i++)
     {
-        string s;
-        cin >> s;
-
-        SAutomata obj(s);
-        for (char c = 'a'; c <= 'z'; c++)
-            if (obj.st[0].next.count(c))
-                cout << obj.st[obj.st[0].next[c]].cnt << " ";
-            else cout << 0 << " ";
+        ll lmax = ob.st[i].len;
+        ll lmin = 1;
+        if (ob.st[i].link != -1)
+            lmin = ob.st[ob.st[i].link].len + 1;
+        if (lmin <= lmax)
+            ins[lmin].pb(ob.st[i].endpos), rem[lmax + 1].pb(ob.st[i].endpos);
     }
+
+    multiset<ll> ms;
+    for (ll i = 1; i <= n; i++)
+    {
+        autoit(rem[i], it)
+        ms.erase(ms.find(*it));
+        autoit(ins[i], it)
+        ms.insert(*it);
+        if (ms.size() > 0)
+            cout << *ms.rbegin() << '\n';
+    }
+
 
     return 0;
 }
