@@ -191,6 +191,36 @@ public:
         return ans;
     }
 
+    ll lcs(string a)
+    {
+        ll ans = 0;
+        ll curr = 0, r = 0, len = 0;
+        while (r < a.length())
+        {
+            if (st[curr].next.count(a[r]))
+            {
+                curr = st[curr].next[a[r]];
+                r++;
+                len++;
+                ans = max(ans, len);
+            }
+
+            else if (st[curr].link == -1)
+            {
+                r++;
+                len = 0;
+                curr = 0;
+            }
+
+            else
+            {
+                curr = st[curr].link;
+                len = st[curr].len;
+            }
+        }
+        return ans;
+    }
+
     string findKth(ll k)
     {
         if (k > dcnt || k < 1)
