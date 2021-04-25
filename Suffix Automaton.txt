@@ -52,7 +52,7 @@ struct state {
     {
         len = 0;
         link = -1;
-        cnt = 0;
+        cnt = -1;
         endpos = 0;
         lcnt = 0;
         isPref = false;
@@ -101,7 +101,8 @@ public:
         st[curr].cnt = 1;
         autoit(st[curr].next, it)
         {
-            getCnt(it->ss);
+            if (st[it->ss].cnt == -1)
+                getCnt(it->ss);
             st[curr].cnt += st[it->ss].cnt;
         }
         if (st[curr].link != -1)
