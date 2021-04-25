@@ -1,0 +1,153 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+/*
+
+- There are atmost 2*N-1 states in a suffix automaton
+- Minimal length for a node v is len(link(v)) + 1
+- Build time is O(N*log(K))
+- Number of distinct substrings in a string : Summation over all nodes (len(v) - len(link(v)))
+- Each unique path from root describes a unique string in the automaton
+
+*/
+
+struct state {
+    ll len;                     //len is the length of the longest suffix for the particular node
+    ll link;                    //suffix link for the current node
+    map<char, ll> next;         //node corresponding to addition of single character
+    ll tcnt = 0;
+};
+
+class SAutomata {
+
+public:
+    vector<state> st;
+    ll sz;
+    ll last;                      //State corresponding to current complete string
+    ll n;
+    ll dcnt;
+    string s;
+
+    SAutomata(string s)
+    {
+        st.pb(state());
+        st[0].len = 0;
+        st[0].link = -1;
+        sz = 1;
+        last = 0;
+        dcnt = 0;
+
+        this->s = s;
+        this->n = n;
+
+        for (auto &x : s)
+            sa_extend(x);
+        getCnt(0);
+    }
+
+    void getCnt(ll curr)
+    {
+        st[curr].cnt = 1;
+        autoit(ma, it)
+        {
+            getCnt(it->ss);
+            st[curr].cnt += st[it->ss].cnt;
+        }
+    }
+
+    void sa_extend(char c) {
+        ll cur = sz++;
+        st.pb(state());
+        st[cur].len = st[last].len + 1;
+        dcnt += (st[cur].len);
+        ll p = last;
+        while (p != -1 && !st[p].next.count(c)) {
+            st[p].next[c] = cur;
+            p = st[p].link;
+        }
+        if (p == -1) {
+            st[cur].link = 0;
+            dcnt -= st[0].len;
+        } else {
+            ll q = st[p].next[c];
+            if (st[p].len + 1 == st[q].len) {
+                st[cur].link = q;
+                dcnt -= st[q].len;
+            } else {
+                ll clone = sz++;
+                st.pb(state());
+                st[clone].len = st[p].len + 1;
+                st[clone].next = st[q].next;
+                st[clone].link = st[q].link;
+                dcnt += st[clone].len - ((st[clone].link == -1) ? 0 : st[st[clone].link].len);
+                while (p != -1 && st[p].next[c] == q) {
+                    st[p].next[c] = clone;
+                    p = st[p].link;
+                }
+                dcnt += ((st[q].link == -1) ? 0 : st[st[q].link].len);
+                st[q].link = st[cur].link = clone;
+                dcnt -= 2 * st[clone].len;
+            }
+        }
+        last = cur;
+    }
+
+    ll lcp(string a)
+    {
+        ll ans = 0, curr = 0;
+        while (ans < a.length())
+        {
+            if (!st[curr].next.count(a[ans]))
+                break;
+            ans++;
+        }
+        return ans;
+    }
+
+
+};
+
+int main()
+{
+    FAST/**/
+
+    ll t;
+    cin >> t;
+
+    while (t--)
+    {
+        string s;
+        cin >> s;
+
+        SAutomata obj(s);
+        cout << obj.dcnt << '\n';
+    }
+
+    return 0;
+}
+
+
