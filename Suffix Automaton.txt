@@ -32,14 +32,31 @@ mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 - Build time is O(N*log(K))
 - Number of distinct substrings in a string : Summation over all nodes (len(v) - len(link(v)))
 - Each unique path from root describes a unique string in the automaton
-
+- Endpos set of link(v) is superset of Endpos set of v
+- Each new addition in the automata (cur variable) at step i corresponds to the state corresponding to prefix[0,i] which is the largest in its set
+- Number of nodes whose endpos is subset of the endpos of a node is proportional to the endpos size of that node
+  (because in the tree, each parent has at least 2 children)
 */
 
 struct state {
     ll len;                     //len is the length of the longest suffix for the particular node
     ll link;                    //suffix link for the current node
     map<char, ll> next;         //node corresponding to addition of single character
-    ll cnt = 0;
+    ll cnt;
+    ll endpos;                  //Size of the set endpos for this node or number of positions that have this suffix in the string
+    ll fstpos;                  //First position in the endpos set of suffix indices
+    ll lcnt;
+    bool isPref;
+
+    state()
+    {
+        len = 0;
+        link = -1;
+        cnt = 0;
+        endpos = 0;
+        lcnt = 0;
+        isPref = false;
+    }
 };
 
 class SAutomata {
@@ -51,6 +68,7 @@ public:
     ll n;
     ll dcnt;
     string s;
+    vector<vector<ll>> gr;
 
     SAutomata(string s)
     {
@@ -67,6 +85,15 @@ public:
         for (auto &x : s)
             sa_extend(x);
         getCnt(0);
+        makeLinkGraph();
+    }
+
+    void makeLinkGraph()
+    {
+        gr.resize(sz);
+        for (ll i = 0; i < sz; i++)
+            if (st[i].link != -1)
+                gr[st[i].link].pb(i);
     }
 
     void getCnt(ll curr)
@@ -77,6 +104,28 @@ public:
             getCnt(it->ss);
             st[curr].cnt += st[it->ss].cnt;
         }
+        if (st[curr].link != -1)
+            st[st[curr].link].endpos += st[curr].endpos;
+    }
+
+    vector<ll> getOccEnding(ll id)
+    {
+        vector<ll> occ;
+        queue<ll> q;
+        q.push(id);
+        while (q.size() > 0)
+        {
+            auto curr = q.front();
+            q.pop();
+
+            if (st[curr].isPref)
+                occ.pb(st[curr].fstpos);
+
+            autoit(gr[curr], it)
+            q.push(*it);
+        }
+
+        return occ;
     }
 
     void sa_extend(char c) {
@@ -84,6 +133,10 @@ public:
         st.pb(state());
         st[cur].len = st[last].len + 1;
         dcnt += (st[cur].len);
+        st[cur].endpos = 1;
+        st[cur].fstpos = st[cur].len - 1;
+        st[cur].isPref = true;
+
         ll p = last;
         while (p != -1 && !st[p].next.count(c)) {
             st[p].next[c] = cur;
@@ -103,6 +156,7 @@ public:
                 st[clone].len = st[p].len + 1;
                 st[clone].next = st[q].next;
                 st[clone].link = st[q].link;
+                st[clone].fstpos = st[q].fstpos;
                 dcnt += st[clone].len - ((st[clone].link == -1) ? 0 : st[st[clone].link].len);
                 while (p != -1 && st[p].next[c] == q) {
                     st[p].next[c] = clone;
