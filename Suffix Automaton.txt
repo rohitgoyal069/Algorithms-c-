@@ -39,7 +39,7 @@ struct state {
     ll len;                     //len is the length of the longest suffix for the particular node
     ll link;                    //suffix link for the current node
     map<char, ll> next;         //node corresponding to addition of single character
-    ll tcnt = 0;
+    ll cnt = 0;
 };
 
 class SAutomata {
@@ -72,7 +72,7 @@ public:
     void getCnt(ll curr)
     {
         st[curr].cnt = 1;
-        autoit(ma, it)
+        autoit(st[curr].next, it)
         {
             getCnt(it->ss);
             st[curr].cnt += st[it->ss].cnt;
@@ -128,6 +128,31 @@ public:
         return ans;
     }
 
+    string findKth(ll k)
+    {
+        if (k > dcnt || k < 1)
+            return "";
+        ll curr = 0;
+        string ans;
+        while (k > 0)
+        {
+            autoit(st[curr].next, it)
+            {
+                if (st[it->ss].cnt < k)
+                {
+                    k -= st[it->ss].cnt;
+                    continue;
+                }
+                ans += it->ff;
+                curr = it->ss;
+                k--;
+                break;
+            }
+        }
+
+        return ans;
+    }
+
 
 };
 
@@ -135,8 +160,7 @@ int main()
 {
     FAST/**/
 
-    ll t;
-    cin >> t;
+    ll t = 1;
 
     while (t--)
     {
@@ -144,7 +168,14 @@ int main()
         cin >> s;
 
         SAutomata obj(s);
-        cout << obj.dcnt << '\n';
+
+        ll q;
+        cin >> q;
+        while (q--) {
+            ll k;
+            cin >> k;
+            cout << obj.findKth(k) << "\n";
+        }
     }
 
     return 0;
