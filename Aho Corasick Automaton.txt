@@ -1,0 +1,205 @@
+//https://www.codechef.com/viewsolution/45473034
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+/*
+
+- It is a trie of a set of strings
+- Each node has a link id for the longest proper suffix that is present in the trie for the string corresponding to that node
+- Generally used after processing a set of strings
+- Parent of Node 0 is 0 itself, ie, 0 is empty string and Pch is inf
+
+*/
+
+struct Vertex {
+    map<ll, ll> next;
+    bool leaf;                                      //boolean if node is a leaf node or not
+    ll p;                                           //Parent of the node
+    ll pch;                                         //Parent character of the node
+    ll link;                                        //Link id for the node
+    ll nearest;                                     //Nearest leaf node in the link path of the node (excluding itself)
+    map<ll, ll> go;                                 //for transitions including link jump transitions along with next transition
+
+    Vertex(ll p = -1, ll ch = inf) : p(p), pch(ch) {
+        link = -1;
+        nearest = -1;
+        leaf = false;
+    }
+
+    ll getGo(ll c)
+    {
+        auto it = go.find(c);
+        if (it == go.end())
+            return -1;
+        return it->ss;
+    }
+
+    ll getNext(ll c)
+    {
+        auto it = next.find(c);
+        if (it == next.end())
+            return -1;
+        return it->ss;
+    }
+};
+
+class AhoCorasick {
+
+public:
+    vector<Vertex> t;
+    ll len;                           //Current total length of the string
+
+    AhoCorasick(vector<vector<ll>> v = {})
+    {
+        t.emplace_back();
+        len = 0;
+
+        autoit(v, it)
+        add_string(*it);
+    }
+
+    void add_string(vector<ll> s) {
+        ll v = 0;
+        for (auto ch : s) {
+            ll c = ch;
+            if (t[v].getNext(c) == -1) {
+                t[v].next[c] = t.size();
+                t.emplace_back(v, ch);
+            }
+            v = t[v].getNext(c);
+        }
+        t[v].leaf = true;
+        len += (ll)s.size();
+    }
+
+    ll getNearest(ll id)
+    {
+        if (t[id].nearest != -1)
+            return t[id].nearest;
+        ll lnk = get_link(id);
+        if (id == 0 || lnk == 0)
+            return t[id].nearest = 0;
+        if (t[lnk].leaf)
+            return t[id].nearest = lnk;
+        return t[id].nearest = getNearest(lnk);
+    }
+
+    ll get_link(ll v) {
+        if (t[v].link == -1) {
+            if (v == 0 || t[v].p == 0)
+                t[v].link = 0;
+            else
+                t[v].link = next(get_link(t[v].p), t[v].pch);
+        }
+        return t[v].link;
+    }
+
+    ll next(ll v, ll ch) {
+        ll c = ch;
+        if (t[v].getGo(c) == -1) {
+            if (t[v].getNext(c) != -1)
+                t[v].go[c] = t[v].getNext(c);
+            else
+                t[v].go[c] = v == 0 ? 0 : next(get_link(v), ch);
+        }
+        return t[v].getGo(c);
+    }
+
+    void print()
+    {
+        string s1;
+        queue<pair<ll, string>> q;
+        q.push(mp(0ll, ""));
+        while (q.size() > 0)
+        {
+            auto curr = q.front();
+            q.pop();
+
+            cout << "for " << curr.ff << " " << curr.ss << " " << get_link(curr.ff) << " " << t[curr.ff].leaf << "\n";
+
+            autoit(t[curr.ff].next, it)
+            {
+                string temp = curr.ss;
+                temp += char(it->ff + 'a');
+                q.push(mp(it->ss, temp));
+            }
+        }
+    }
+
+};
+
+int main()
+{
+    FAST/**/
+
+    string s;
+    cin >> s;
+
+    AhoCorasick ob;
+    ll k;
+    cin >> k;
+
+    rep(k)
+    {
+        string s;
+        cin >> s;
+        vector<ll> v;
+        autoit(s, it)
+        v.pb(*it - 'a');
+        ob.add_string(v);
+    }
+
+    ll n = s.length();
+    ll nds = ob.t.size();
+    ll dp[n + 1][nds];
+    memset(dp, 0, sizeof(dp));
+    for (ll i = 1; i <= n; i++)
+    {
+        ll ch = (s[i - 1] - 'a');
+        for (ll j = 0; j < nds; j++)
+        {
+            if (ob.t[j].leaf == true || ob.getNearest(j) != 0)
+                continue;
+            ll nxt = ob.next(j, ch);
+            if (ob.t[nxt].leaf == false && ob.getNearest(nxt) == 0)
+                dp[i][nxt] = max(dp[i][nxt], dp[i - 1][j] + 1);
+        }
+        for (ll j = 0; j < nds; j++)
+            dp[i][j] = max(dp[i][j], dp[i - 1][j]);
+    }
+
+    ll ans = 0;
+    rep(n + 1)
+    repi(j, nds)
+    ans = max(ans, dp[i][j]);
+    cout << ans << "\n";
+
+
+
+    return 0;
+}
