@@ -1,0 +1,111 @@
+//https://www.codechef.com/viewsolution/45729377
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef int ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+void add(ll &a, ll &b)
+{
+    a += b;
+    if (a >= mod)
+        a -= mod;
+}
+
+int main()
+{
+    FAST/**/
+
+    ll p2[60];
+    p2[0] = 1;
+    for (ll i = 1; i < 60; i++)
+        p2[i] = p2[i - 1] * 2;
+
+    ll t;
+    cin >> t;
+
+    while (t--)
+    {
+        ll m, n;
+        cin >> m >> n;
+
+        ll arr[n][m];
+        rep(n)
+        repi(j, m)
+        cin >> arr[i][j];
+        ll la = (1ll << (n + 1));
+        ll dp[n + 2][m + 2][la][2][2];        //left-up, right-down
+        memset(dp, 0, sizeof(dp));
+        ll tot[m + 1][la];
+        memset(tot, 0, sizeof(tot));
+        repi(mask, la)
+        tot[m][mask] = 1;
+        for (ll j = m - 1; j > -1; j--)
+        {
+            for (ll mask = 0; mask < la; mask++)
+                for (ll s1 = 0; s1 < 2; s1++)
+                    for (ll s2 = 0; s2 < 2; s2++)
+                    {
+                        ll s3 = (p2[n] & mask) > 0;
+                        ll s4 = (p2[n - 1] & mask) > 0;
+                        ll gt = 0;
+                        if (s1 == s2 && s3 == s4 && s1 + s2 + s3 + s4 == 2)
+                            gt = 1;
+                        if (gt == arr[n - 1][j])
+                            add(dp[n - 1][j][mask][s1][s2], tot[j + 1][mask - (p2[n]&mask) + (p2[n]*s2)]);
+                    }
+
+            for (ll i = n - 2; i > -1; i--)
+                for (ll mask = 0; mask < la; mask++)
+                    for (ll s1 = 0; s1 < 2; s1++)
+                        for (ll s2 = 0; s2 < 2; s2++)
+                            for (ll c2 = 0; c2 < 2; c2++)
+                            {
+                                ll s3 = (p2[i + 1] & mask) > 0;
+                                ll c1 = s3;
+                                ll s4 = (p2[i] & mask) > 0;
+                                ll gt = 0;
+                                if (s1 == s2 && s3 == s4 && s1 + s2 + s3 + s4 == 2)
+                                    gt = 1;
+                                if (gt == arr[i][j])
+                                    add(dp[i][j][mask][s1][s2], dp[i + 1][j][mask - (p2[i + 1]&mask) + (s2 * p2[i + 1])][c1][c2]);
+                            }
+            for (ll s1 = 0; s1 < 2; s1++)
+                for (ll s2 = 0; s2 < 2; s2++)
+                    for (ll mask = 0; mask < la; mask++)
+                        add(tot[j][mask - (p2[0]&mask) + (s1 * p2[0])], dp[0][j][mask][s1][s2]);
+        }
+
+        ll ans = 0;
+        for (ll mask = 0; mask < la; mask++)
+            add(ans, tot[0][mask]);
+        cout << ans << "\n";
+
+    }
+
+    return 0;
+}
+
+
