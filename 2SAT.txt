@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+class SAT {
+public:
+    ll n;
+    vector<vector<ll>> g, gt;
+    vector<bool> used;
+    vector<ll> order, comp;
+    vector<bool> assignment;
+
+    SAT(ll n)
+    {
+        g = vector<vector<ll>>(2 * n);
+        gt = g;
+        this->n = n;
+    }
+
+    inline ll dash(ll id1)
+    {
+        if (id1 % 2)
+            return id1 - 1;
+        return id1 + 1;
+    }
+
+    void add_edge(ll a, ll b, bool c1, bool c2)
+    {
+        ll id1 = 2 * a + c1, id2 = 2 * b + c2;
+        g[dash(id1)].pb(id2);
+        g[dash(id2)].pb(id1);
+        gt[id2].pb(dash(id1));
+        gt[id1].pb(dash(id2));
+    }
+
+
+    void dfs1(ll v) {
+        used[v] = true;
+        for (ll u : g[v]) {
+            if (!used[u])
+                dfs1(u);
+        }
+        order.push_back(v);
+    }
+
+    void dfs2(ll v, ll cl) {
+        comp[v] = cl;
+        for (ll u : gt[v]) {
+            if (comp[u] == -1)
+                dfs2(u, cl);
+        }
+    }
+
+    bool solve_2SAT() {
+        order.clear();
+        used.assign(2 * n, false);
+        for (ll i = 0; i < 2 * n; ++i) {
+            if (!used[i])
+                dfs1(i);
+        }
+
+        comp.assign(2 * n, -1);
+        for (ll i = 0, j = 0; i < 2 * n; ++i) {
+            ll v = order[2 * n - i - 1];
+            if (comp[v] == -1)
+                dfs2(v, j++);
+        }
+
+        assignment.assign(n, false);
+        for (ll i = 0; i < 2 * n; i += 2) {
+            if (comp[i] == comp[i + 1])
+                return false;
+            assignment[i / 2] = comp[i] > comp[i + 1];
+        }
+        return true;
+    }
+};
