@@ -1,3 +1,5 @@
+//https://www.codechef.com/viewsolution/45937204
+
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef long long ll;
@@ -24,6 +26,32 @@ using namespace __gnu_pbds;
 
 using namespace std;
 mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+ll find(ll x, ll par[])
+{
+    if (x == par[x])
+        return x;
+    return par[x] = find(par[x], par);
+}
+
+void unio(ll x, ll y, ll par[], ll rank[])
+{
+    x = find(x, par);
+    y = find(y, par);
+    if (x == y)
+        return;
+    if (rank[x] > rank[y])
+    {
+        rank[x] = max(rank[x], rank[y] + 1);
+        par[y] = x;
+    }
+
+    else
+    {
+        rank[y] = max(rank[y], rank[x] + 1);
+        par[x] = y;
+    }
+}
 
 class SAT {
 public:
@@ -98,3 +126,135 @@ public:
         return true;
     }
 };
+
+int main()
+{
+    FAST/**/
+
+    ll t;
+    cin >> t;
+
+    while (t--)
+    {
+        ll n, d, k;
+        cin >> n >> d >> k;
+
+        SAT ob(k);
+
+        pii arr[k];
+        rep(k)
+        cin >> arr[i].ff >> arr[i].ss;
+        map<ll, vector<pii>> col, row;
+        rep(k)
+        col[arr[i].ff].pb({arr[i].ss, i}), row[arr[i].ss].pb({arr[i].ff, i});
+
+        autoit(row, it)
+        sort((it->ss).begin(), (it->ss).end());
+        autoit(col, it)
+        sort((it->ss).begin(), (it->ss).end());
+        ll par[k], rank[k];
+        rep(k)
+        par[i] = i, rank[i] = 0;
+        autoit(row, it)
+        {
+            vector<pii> &v = it->ss;
+            ll siz = v.size();
+            for (ll j = 1; j < siz; j++)
+                if (v[j].ff - v[j - 1].ff <= d)
+                    unio(v[j].ss, v[j - 1].ss, par, rank);
+        }
+
+        autoit(col, it)
+        {
+            vector<pii> &v = it->ss;
+            ll siz = v.size();
+            for (ll j = 1; j < siz; j++)
+                if (v[j].ff - v[j - 1].ff <= d)
+                    unio(v[j].ss, v[j - 1].ss, par, rank);
+        }
+
+        multiset<pair<ll, pii>> by_col;
+        multiset<pii> cols;
+        autoit(col, it)
+        {
+            while (by_col.size() > 0 && it->ff - by_col.begin()->ff > d)
+            {
+                cols.erase(cols.find({by_col.begin()->ss}));
+                by_col.erase(by_col.begin());
+            }
+
+            vector<pii> &v = it->ss;
+            ll siz = v.size();
+            for (ll j = 0; j < siz; j++)
+            {
+                ll maxi = v[j].ff + d, mini = v[j].ff - d;
+                auto ub = cols.upper_bound({maxi, inf});
+                auto lb = cols.lower_bound({mini, -1ll});
+                if (ub != cols.begin() && (--ub)->ff <= maxi && ub->ff >= mini)
+                    unio(ub->ss, v[j].ss, par, rank);
+                if (lb != cols.end() && lb->ff <= maxi && lb->ff >= mini)
+                    unio(lb->ss, v[j].ss, par, rank);
+            }
+
+            for (ll j = 0; j < siz; j++)
+            {
+                by_col.insert({it->ff, v[j]});
+                cols.insert(v[j]);
+            }
+        }
+
+        autoit(row, it)
+        {
+            vector<pii> &v = it->ss;
+            ll siz = v.size();
+            for (ll j = 1; j < siz; j++) {
+                ll dis = v[j].ff - v[j - 1].ff;
+                ll n1 = find(v[j].ss, par), n2 = find(v[j - 1].ss, par);
+                if (dis < 2 * d && dis > d)
+                    ob.add_edge(n1, n2, 0, 0);
+                else if (dis <= d)
+                {
+                    ob.add_edge(n1, n2, 0, 0);
+                    ob.add_edge(n1, n2, 0, 1);
+                    ob.add_edge(n1, n2, 1, 0);
+                }
+            }
+        }
+
+        autoit(col, it)
+        {
+            vector<pii> &v = it->ss;
+            ll siz = v.size();
+            for (ll j = 1; j < siz; j++) {
+                ll dis = v[j].ff - v[j - 1].ff;
+                ll n1 = find(v[j].ss, par), n2 = find(v[j - 1].ss, par);
+                if (dis < 2 * d && dis > d)
+                    ob.add_edge(n1, n2, 1, 1);
+                else if (dis <= d)
+                {
+                    //cout<<"exec\n";
+                    ob.add_edge(n1, n2, 1, 1);
+                    ob.add_edge(n1, n2, 0, 1);
+                    ob.add_edge(n1, n2, 1, 0);
+                    //cout<<"en\n";
+                }
+            }
+        }
+
+        bool pos = ob.solve_2SAT();
+        if (!pos)
+        {
+            cout << "No\n";
+            continue;
+        }
+        cout << "Yes\n";
+        rep(k)
+        cout << (ob.assignment[find(i, par)] ^ 1) << " ";
+        cout << '\n';
+
+    }
+
+    return 0;
+}
+
+
