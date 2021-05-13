@@ -1,0 +1,288 @@
+//https://judge.yosupo.jp/submission/47649
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp> 
+#include <ext/pb_ds/tree_policy.hpp> 
+using namespace __gnu_pbds; 
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update> 
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+const ll mod = 998244353;
+bool to_split = true;
+map<ll,vector<ll>> cache;
+ll len_lim = 131075;
+
+ll powa(ll a, ll b, ll c)
+{
+    a%=c;
+    if(a<0)
+	a+=c;
+    ll res = 1;
+    while(b>0)
+    {
+        if(b&1)
+            res*=a, res%=c;
+        a*=a, a%=c;
+        b>>=1;
+    }
+    return res;
+}
+
+ll root = 31;
+ll root_1;
+ll root_pw = (1ll << 23);
+ 
+void fft(vector<ll> & a, bool invert) {
+    ll n = a.size();
+    if(!cache.count(n)){
+        cache[n] = vector<ll>(n);
+        vector<ll> &v = cache[n];
+        for (ll i = 1, j = 0; i < n; i++) {
+            ll bit = n >> 1;
+            for (; j & bit; bit >>= 1)
+                j ^= bit;
+            j ^= bit;
+    
+            if (i < j)
+                swap(a[i], a[j]);
+            v[i] = j;    
+        }
+    }
+    else
+    {
+        vector<ll> &v = cache[n];
+        for (ll i = 1; i < n; i++) {
+            if (i < v[i])
+                swap(a[i], a[v[i]]);
+        }
+    }
+ 
+    for (ll len = 2; len <= n; len <<= 1) {
+        ll wlen = invert ? root_1 : root;
+        for (ll i = len; i < root_pw; i <<= 1)
+            wlen = (ll)(1LL * wlen * wlen % mod);
+ 
+        for (ll i = 0; i < n; i += len) {
+            ll w = 1;
+            for (ll j = 0; j < len / 2; j++) {
+                ll u = a[i+j], v = (ll)(1LL * a[i+j+len/2] * w % mod);
+                a[i+j] = u + v < mod ? u + v : u + v - mod;
+                a[i+j+len/2] = u - v >= 0 ? u - v : u - v + mod;
+                w = (ll)(1LL * w * wlen % mod);
+            }
+        }
+    }
+ 
+    if (invert) {
+        ll n_1 = powa(n,mod-2,mod);
+        for (ll & x : a)
+            x = (ll)(1LL * x * n_1 % mod);
+    }
+}
+ 
+vector<ll> mod_multiply(vector<ll> const& a, vector<ll> const& b, ll mod, bool split) {
+    vector<ll> fa(a.begin(), a.end()), fb(b.begin(), b.end());
+    ll n = 1;
+    while (n < a.size() + b.size()) 
+        n <<= 1;
+    fa.resize(n);
+    fb.resize(n);
+    
+    while(root_pw>n)
+    {
+         root_pw>>=1;
+         root*=root;
+         root%=mod;
+    }
+    //cout<<"root = "<<root<<"\n";
+    root_1 = powa(root,mod-2,mod);
+    
+    fft(fa, false);
+    fft(fb, false);
+    for (ll i = 0; i < n; i++)
+        fa[i] *= fb[i], fa[i]%=mod;
+    fft(fa, true);
+ 
+    while(fa.size()>1 && fa.back() == 0)
+        fa.pop_back();
+    root = 31;
+    root_pw = (1ll << 23);
+    return fa;
+}
+ 
+
+vector<ll> pinv(const vector<ll> &poly, ll k)                           //first k terms
+{
+    if(k == 0)  
+        return {};
+    vector<ll> init = {powa(poly[0],mod-2,mod)};
+    for(ll cl=2;cl<2*k;cl*=2)
+    {
+        vector<ll> tmp = mod_multiply(poly,init,(ll)mod,to_split);
+        tmp = mod_multiply(tmp,init,(ll)mod,to_split);   
+        tmp.resize(cl);
+        init.resize(cl);
+        for(ll j=0;j<cl;j++)
+            init[j] = (2*init[j]-tmp[j]+mod)%mod;    
+    }
+    
+    init.resize(k);
+    while(init.size()>1 && init.back() == 0)
+            init.pop_back();
+    return init;
+}
+
+vector<ll> quot(const vector<ll> &num, const vector<ll> &den)
+{
+    if(num.size() < den.size())
+        return {0};
+    vector<ll> r1 = num, r2 = den;
+    ll n = num.size(), m = den.size();
+    reverse(r1.begin(),r1.end());
+    reverse(r2.begin(),r2.end());
+    r2 = pinv(r2,n-m+1);
+    r2 = mod_multiply(r2,r1,(ll)mod,to_split);
+    r2.resize(n-m+1);
+    reverse(r2.begin(),r2.end());
+    while(r2.size()>1 && r2.back() == 0)
+        r2.pop_back();
+    return r2;
+}
+
+vector<ll> rem(const vector<ll> &num, const vector<ll> &den)
+{
+    if(num.size() < den.size())
+        return num;
+    ll n = num.size(), m = den.size();
+    vector<ll> d = quot(num,den);
+    d = mod_multiply(d,den,mod,to_split);
+    d.resize(n);
+    for(ll i=0;i<n;i++)
+        d[i] = (num[i] - d[i] + mod)%mod; 
+    d.resize(m-1);
+    while(d.size()>1 && d.back() == 0)
+        d.pop_back();   
+    return d;    
+}
+
+void build(vector<ll> st[], ll l, ll r, ll i, vector<ll> &vals)
+{
+    if(l > r)
+        return;
+    if(l == r)
+    {
+        st[i] = {(mod-vals[l])%mod,1ll};
+        return;
+    }
+    
+    ll mid = (l+r)/2;
+    build(st,l,mid,2*i+1,vals);
+    build(st,mid+1,r,2*i+2,vals);
+    if(r-l+1<=len_lim)
+        st[i] = mod_multiply(st[2*i+1],st[2*i+2],mod,to_split);
+}
+
+void getAns(vector<ll> st[], ll l, ll r, ll i, vector<ll> &crem, vector<ll> &ans)
+{
+    if(l>r)
+        return;
+    if(l == r)
+    {
+        ans[l] = crem[0];
+        return;
+    }
+    ll mid = (l+r)/2;
+    vector<ll> tmp;
+    if(mid-l+1<=len_lim){
+        tmp = rem(crem,st[2*i+1]);
+        getAns(st,l,mid,2*i+1,tmp,ans);
+    }
+    else getAns(st,l,mid,2*i+1,crem,ans);
+    
+    if(r-mid<=len_lim){
+        tmp = rem(crem,st[2*i+2]);
+        getAns(st,mid+1,r,2*i+2,tmp,ans);
+    }
+    else getAns(st,mid+1,r,2*i+2,crem,ans);
+}
+
+vector<ll> eval(const vector<ll> &poly, vector<ll> vals)
+{
+    if(vals.size() == 0)
+        return {};
+    autoit(vals,it){
+        (*it)%=mod;
+        if((*it) < 0)
+            (*it) += mod;
+    }
+    ll k = vals.size(), n = poly.size();
+    vector<ll> ans(k,0);    
+    if(k <= 2)
+    {
+        for(ll i=0;i<k;i++)
+        {
+            ll cr = 1;
+            autoit(poly,it)
+            {
+                ans[i] = (ans[i] + (cr*(*it)))%mod;
+                cr = (cr*vals[i])%mod;
+            }
+        }
+        return ans;
+    }
+    ll ht = ceil(log2(k));
+    ht = (1ll<<(ht + 1)) - 1;
+    vector<ll> range_poly[ht];
+    build(range_poly,0,k-1,0,vals);
+    //cout<<rem(poly,range_poly[1]).size()<<'\n';
+    vector<ll> p1=poly;
+    vector<ll> p2=poly;
+    if(range_poly[1].size()>0)
+        p1 = rem(poly,range_poly[1]);
+    if(range_poly[2].size()>0)
+        p2 = rem(poly,range_poly[2]);
+    //cout<<rem(poly,range_poly[2]).size()<<"\n";
+    getAns(range_poly,0,(k-1)/2,1,p1,ans);
+    getAns(range_poly,(k+1)/2,k-1,2,p2,ans);
+    return ans;
+}
+
+int main()
+{
+  FAST/**/
+  
+  ll n,m;
+  cin>>n>>m;
+  vector<ll> poly(n);
+  vector<ll> vals(m);
+  rep(n)
+        cin>>poly[i];
+  rep(m)
+        cin>>vals[i];
+  vals = eval(poly,vals);
+  autoit(vals,it)
+        cout<<*it<<" ";
+    
+  return 0;
+}
+   
+   
+ 
