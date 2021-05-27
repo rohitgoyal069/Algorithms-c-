@@ -1,0 +1,146 @@
+//https://codedrills.io/submissions/66406
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 1000000007
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+/*
+
+For each increasing 'r' pointer, the mex of suffixes changes at atmost O(N) amortized itervals over the whole course of iteration.
+We just need to find those using a segment tree. Current complexity of the solution is O(N log^2(N)) but it can be improved to O(Nlog(N)) using binary search during query of segment tree.
+
+*/
+
+inline ll que(ll st[], ll l, ll r, ll l1, ll r1, ll i)
+{
+    if (l > r1 || l1 > r || l1 > r1)
+        return inf;
+    if (l >= l1 && r <= r1)
+        return st[i];
+    ll mid = (l + r) / 2;
+
+    return min(que(st, l, mid, l1, r1, 2 * i + 1), que(st, mid + 1, r, l1, r1, 2 * i + 2));
+}
+
+void upd(ll st[], ll l, ll r, ll l1, ll i, ll val)
+{
+    if (l > l1 || r < l1)
+        return;
+    if (l == r)
+    {
+        st[i] = val;
+        return;
+    }
+
+    ll mid = (l + r) / 2;
+    upd(st, l, mid, l1, 2 * i + 1, val);
+    upd(st, mid + 1, r, l1, 2 * i + 2, val);
+
+    st[i] = min(st[2 * i + 1], st[2 * i + 2]);
+}
+
+
+int main()
+{
+    FAST/**/
+
+    ll t;
+    cin >> t;
+
+    while (t--)
+    {
+        ll n;
+        cin >> n;
+
+        ll arr[n];
+        rep(n)
+        cin >> arr[i];
+        ll las[n + 2];
+        rep(n + 2)
+        las[i] = -1;
+        ll ht = ceil(log2(n + 1));
+        ht = (1ll << (ht + 1)) - 1;
+        ll lst[ht];
+        memset(lst, -1, sizeof(lst));
+
+        ll ans = 0;
+        ll tot = 0;
+        rep(n)
+        {
+            ll fid = i;
+            ll lid = las[arr[i]];
+            if (arr[i] != 0)
+                fid = que(lst, 0, n, 0, arr[i] - 1, 0);
+            tot -= max(0ll, fid - lid) * arr[i];                    //Subtracting mex for the original [lid+1,min(fid,i-1)] part which is arr[i] only
+
+            las[arr[i]] = i;
+            upd(lst, 0, n, arr[i], 0, i);
+
+            ll cm = 0;
+            ll l = 0, r = n;
+            while (r >= l)
+            {
+                ll mid = (l + r) / 2;
+                ll tmp = que(lst, 0, n, 0, mid, 0);
+                if (tmp < fid)
+                    r = mid - 1;
+                else
+                {
+                    cm = mid + 1;
+                    l = mid + 1;
+                }
+            }
+            ll sta = fid;
+            while (sta > lid)
+            {
+                ll req = max(las[cm], lid);                         //Mex for the current range [req+1,sta] is cm
+                ll l = cm, r = n;
+                tot += cm * max(sta - req, 0ll);
+                ll tcm = cm;
+                while (l <= r)
+                {
+                    ll mid = (l + r) / 2;
+                    ll tmp = que(lst, 0, n, 0, mid, 0);
+                    if (tmp < req)
+                        r = mid - 1;
+                    else
+                    {
+                        l = mid + 1;
+                        tcm = mid + 1;
+                    }
+                }
+                sta = req;
+                cm = tcm;
+            }
+            ans += tot;
+        }
+        cout << ans << "\n";
+    }
+
+    return 0;
+}
+
+
