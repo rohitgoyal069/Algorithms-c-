@@ -1,4 +1,5 @@
 //https://www.codechef.com/viewsolution/47707189
+//https://www.codechef.com/viewsolution/47717779
 #include <bits/stdc++.h>
 #define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
 typedef long long ll;
@@ -25,7 +26,71 @@ using namespace __gnu_pbds;
 using namespace std;
 mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
 
-using namespace std;
+const int mod = 998244353;
+
+template<typename T>
+T bpow(T x, size_t n) {
+    return n ? n % 2 ? x * bpow(x, n - 1) : bpow(x * x, n / 2) : T(1);
+}
+template<typename T>
+T bpow(T x, size_t n, T m) {
+    return n ? n % 2 ? x * bpow(x, n - 1, m) % m : bpow(x * x % m, n / 2, m) : T(1);
+}
+template<typename T>
+T gcd(const T &a, const T &b) {
+    return b == T(0) ? a : gcd(b, a % b);
+}
+template<typename T>
+T nCr(T n, int r) { // runs in O(r)
+    T res(1);
+    for (int i = 0; i < r; i++) {
+        res *= (n - T(i));
+        res /= (i + 1);
+    }
+    return res;
+}
+
+template<int m>
+struct modular {
+    int64_t r;
+    modular() : r(0) {}
+    modular(int64_t rr) : r(rr) {if (abs(r) >= m) r %= m; if (r < 0) r += m;}
+    modular inv() const {return bpow(*this, m - 2);}
+    modular operator * (const modular &t) const {return (r * t.r) % m;}
+    modular operator / (const modular &t) const {return *this * t.inv();}
+    modular operator += (const modular &t) {r += t.r; if (r >= m) r -= m; return *this;}
+    modular operator -= (const modular &t) {r -= t.r; if (r < 0) r += m; return *this;}
+    modular operator + (const modular &t) const {return modular(*this) += t;}
+    modular operator - (const modular &t) const {return modular(*this) -= t;}
+    modular operator *= (const modular &t) {return *this = *this * t;}
+    modular operator /= (const modular &t) {return *this = *this / t;}
+
+    bool operator == (const modular &t) const {return r == t.r;}
+    bool operator != (const modular &t) const {return r != t.r;}
+
+    operator int64_t() const {return r;}
+
+    modular pow(long long p) const {
+        assert(p >= 0);
+        modular a = *this, result = 1;
+        while (p > 0) {
+            if (p & 1)
+                result *= a;
+
+            a *= a;
+            p >>= 1;
+        }
+        return result;
+    }
+};
+template<int T>
+istream& operator >> (istream &in, modular<T> &x) {
+    return in >> x.r;
+}
+
+typedef modular<mod> base;
+
+
 namespace algebra {
 const int inf = 1e9;
 const int magic = 500; // threshold for sizes to run the naive algo
@@ -171,51 +236,150 @@ void mul(vector<T> &a, const vector<T> &b) {
     return;
 }
 }
-template<typename T>
-T bpow(T x, size_t n) {
-    return n ? n % 2 ? x * bpow(x, n - 1) : bpow(x * x, n / 2) : T(1);
+
+namespace ntt {
+vector<base> roots = {0, 1};
+vector<int> bit_reverse;
+int max_size = -1;
+base root;
+
+bool is_power_of_two(int n) {
+    return (n & (n - 1)) == 0;
 }
-template<typename T>
-T bpow(T x, size_t n, T m) {
-    return n ? n % 2 ? x * bpow(x, n - 1, m) % m : bpow(x * x % m, n / 2, m) : T(1);
+
+int round_up_power_two(int n) {
+    while (n & (n - 1))
+        n = (n | (n - 1)) + 1;
+
+    return max(n, 1);
 }
-template<typename T>
-T gcd(const T &a, const T &b) {
-    return b == T(0) ? a : gcd(b, a % b);
+
+// Given n (a power of two), finds k such that n == 1 << k.
+int get_length(int n) {
+    assert(is_power_of_two(n));
+    return __builtin_ctz(n);
 }
+
+// Rearranges the indices to be sorted by lowest bit first, then second lowest, etc., rather than highest bit first.
+// This makes even-odd div-conquer much easier.
+
 template<typename T>
-T nCr(T n, int r) { // runs in O(r)
-    T res(1);
-    for (int i = 0; i < r; i++) {
-        res *= (n - T(i));
-        res /= (i + 1);
+void bit_reorder(int n, vector<T> &values) {
+    if ((int) bit_reverse.size() != n) {
+        bit_reverse.assign(n, 0);
+        int length = get_length(n);
+
+        for (int i = 0; i < n; i++)
+            bit_reverse[i] = (bit_reverse[i >> 1] >> 1) + ((i & 1) << (length - 1));
     }
-    return res;
+
+    for (int i = 0; i < n; i++)
+        if (i < bit_reverse[i])
+            swap(values[i], values[bit_reverse[i]]);
 }
 
-template<int m>
-struct modular {
-    int64_t r;
-    modular() : r(0) {}
-    modular(int64_t rr) : r(rr) {if (abs(r) >= m) r %= m; if (r < 0) r += m;}
-    modular inv() const {return bpow(*this, m - 2);}
-    modular operator * (const modular &t) const {return (r * t.r) % m;}
-    modular operator / (const modular &t) const {return *this * t.inv();}
-    modular operator += (const modular &t) {r += t.r; if (r >= m) r -= m; return *this;}
-    modular operator -= (const modular &t) {r -= t.r; if (r < 0) r += m; return *this;}
-    modular operator + (const modular &t) const {return modular(*this) += t;}
-    modular operator - (const modular &t) const {return modular(*this) -= t;}
-    modular operator *= (const modular &t) {return *this = *this * t;}
-    modular operator /= (const modular &t) {return *this = *this / t;}
+void find_root() {
+    max_size = 1 << __builtin_ctz(mod - 1);
+    root = 2;
 
-    bool operator == (const modular &t) const {return r == t.r;}
-    bool operator != (const modular &t) const {return r != t.r;}
+    // Find a max_size-th primitive root of MOD.
+    while (!(root.pow(max_size) == base(1) && root.pow(max_size / 2) != base(1)))
+        root = (root + base(1));
+}
 
-    operator int64_t() const {return r;}
-};
-template<int T>
-istream& operator >> (istream &in, modular<T> &x) {
-    return in >> x.r;
+void prepare_roots(int n) {
+    if (max_size < 0)
+        find_root();
+
+    assert(n <= max_size);
+
+    if ((int) roots.size() >= n)
+        return;
+
+    int length = get_length(roots.size());
+    roots.resize(n);
+
+    // The roots array is set up such that for a given power of two n >= 2, roots[n / 2] through roots[n - 1] are
+    // the first half of the n-th primitive roots of MOD.
+    while (1 << length < n) {
+        // z is a 2^(length + 1)-th primitive root of MOD.
+        base z = root.pow(max_size >> (length + 1));
+
+        for (int i = 1 << (length - 1); i < 1 << length; i++) {
+            roots[2 * i] = roots[i];
+            roots[2 * i + 1] = roots[i] * z;
+        }
+
+        length++;
+    }
+}
+
+template<typename T>
+void fft_iterative(int N, vector<T> &values) {
+    assert(is_power_of_two(N));
+    prepare_roots(N);
+    bit_reorder(N, values);
+
+    for (int n = 1; n < N; n *= 2)
+        for (int start = 0; start < N; start += 2 * n)
+            for (int i = 0; i < n; i++) {
+                T even = values[start + i];
+                T odd = values[start + n + i] * roots[n + i];
+                values[start + n + i] = even - odd;
+                values[start + i] = even + odd;
+            }
+}
+
+const int FFT_CUTOFF = magic;
+
+template<typename T>
+vector<T> mod_multiply(vector<T> left, vector<T> right) {
+    int n = left.size();
+    int m = right.size();
+
+    // Brute force when either n or m is small enough.
+    if (min(n, m) < FFT_CUTOFF) {
+//          const uint64_t ULL_BOUND = numeric_limits<uint64_t>::max() - (uint64_t) MOD * MOD;
+        vector<uint64_t> result(n + m - 1, 0);
+
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < m; j++) {
+                result[i + j] += left[i] * right[j];
+            }
+
+//          for (uint64_t &x : result)
+//              if (x >= MOD)
+//                  x %= MOD;
+
+        return vector<T>(result.begin(), result.end());
+    }
+
+    int N = round_up_power_two(n + m - 1);
+    left.resize(N);
+    right.resize(N);
+
+    bool equal = left == right;
+    fft_iterative(N, left);
+
+    if (equal)
+        right = left;
+    else
+        fft_iterative(N, right);
+
+    T inv_N = T(N).inv();
+
+    for (int i = 0; i < N; i++)
+        left[i] *= right[i] * inv_N;
+
+    reverse(left.begin() + 1, left.end());
+    fft_iterative(N, left);
+    left.resize(n + m - 1);
+    return left;
+}
+template<typename T>
+void mul(vector<T> &a, const vector<T> &b) {
+    a = mod_multiply(a, b);
+}
 }
 
 
@@ -282,7 +446,7 @@ struct poly {
         return ans.mod_xk(n);
     }
 
-    poly operator *= (const poly &t) {fft::mul(a, t.a); normalize(); return *this;}
+    poly operator *= (const poly &t) {ntt::mul(a, t.a); normalize(); return *this;}                     //change namespace to fft to use fft here
     poly operator * (const poly &t) const {return poly(*this) *= t;}
 
     poly reverse(size_t n, bool rev = 0) const { // reverses and leaves only n terms
@@ -579,8 +743,6 @@ poly<T> inter(vector<T> x, vector<T> y) { // interpolates minimum polynomial fro
 
 using namespace algebra;
 
-const int mod = 998244353;
-typedef modular<mod> base;
 typedef poly<base> polyn;
 
 using namespace algebra;
@@ -601,57 +763,46 @@ ll powa(ll a, ll b, ll c)
     return res;
 }
 
-#define MAXN 500005
+#define MAXN 150005
 
 int main() {
     FAST /**/
-    // int n = 100000;
-    // polyn a;
-    // vector<base> x;
-    // for (int i = 0; i <= n; i++) {
-    //     a.a.push_back(1 + rand() % 100);
-    //     x.push_back(1 + rand() % (2 * n));
-    // }
-    // sort(begin(x), end(x));
-    // x.erase(unique(begin(x), end(x)), end(x));
-    // auto b = a.eval(x);
-    // cout << clock() / double(CLOCKS_PER_SEC) << endl;
-    // auto c = inter(x, b);
-    // polyn md = kmul(begin(x), end(x));
-    // cout << clock() / double(CLOCKS_PER_SEC) << endl;
-    // assert(c == a % md);
 
-    ll n, k, a, b, p;
-    cin >> n >> k >> a >> b >> p;
+    ll inv[MAXN];
+    inv[1] = 1;
+    for (ll i = 2; i < MAXN; i++)
+        inv[i] = powa(i, mod - 2, mod);
 
-    ll g = powa(1 - p, mod - 2, mod);
-    g = (g * p) % mod;
+    ll n, q;
+    cin >> n >> q;
 
-    ll fact[MAXN], ifact[MAXN];
-    fact[0] = ifact[0] = 1;
-    for (ll i = 1; i < MAXN; i++)
-        fact[i] = (fact[i - 1] * i) % mod;
-    for (ll i = 1; i < MAXN; i++)
-        ifact[i] = (ifact[i - 1] * powa(i, mod - 2, mod)) % mod;
-    polyn fst, sec;
-    ll coeff = powa((1 - p), n, mod);
-    ll coeff1 = g;
-    //cout<<"g = "<<g<<'\n';
-    for (ll i = 0; i <= k; i++)
-    {
-        fst.a.pb((coeff * ifact[i]) % mod);
-        sec.a.pb((coeff1 * ifact[i]) % mod);
-        coeff = (coeff * b) % mod;
-        coeff1 = (coeff1 * a) % mod;
+    pii arr[q];
+    rep(q)
+    cin >> arr[i].ff >> arr[i].ss, arr[i].ss = (arr[i].ss + 1) * arr[i].ff;
+    ll c[n + 10], a[n + 10];
+    memset(c, 0, sizeof(c));
+    memset(a, 0, sizeof(a));
+
+    rep(q) {
+        a[arr[i].ff]++;
+        if (arr[i].ss <= n)
+            c[arr[i].ss]++;
     }
 
-    sec.a[0] = (sec.a[0] + base(1)) % mod;
-    sec = sec.pow(n, k + 1);
-    sec *= fst;
-    for (ll i = 1; i <= k; i++)
-        if (sec.a.size() > i)
-            cout << (sec.a[i]*base(fact[i])) % mod << " ";
-        else cout << 0 << " ";
+    vector<ll> po(n + 10, 0);
+    for (ll i = 1; i <= n + 9; i++)
+        for (ll j = 1; j <= (n + 9) / i; j++)
+        {
+            ll id = j * i;
+            po[id] = (po[id] + (a[i] * inv[j]) % mod) % mod;
+            po[id] = (po[id] - (c[i] * inv[j]) % mod) % mod;
+        }
+    polyn p;
+    for (ll i = 0; i < n + 10; i++)
+        p.a.pb(po[i]);
+    p = p.exp(n + 1);
+    for (ll i = 1; i <= n; i++)
+        cout << p[i] << " ";
 
 
     return 0;
