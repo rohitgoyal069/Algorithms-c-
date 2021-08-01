@@ -99,8 +99,9 @@ int main()
    fact[0] = 1;
    for(ll i=1;i<N;i++)
         fact[i] = fact[i-1]*i, fact[i]%=mod;
-   for(ll i=0;i<N;i++)
-        ifact[i] = powa(fact[i],mod-2,mod);     
+   ifact[N-1] = powa(fact[N-1],mod-2,mod);        
+   for(ll i=N-2;i>-1;i--)
+       ifact[i] = (ifact[i+1]*(i+1))%mod;
    
    return 0;        
 }  

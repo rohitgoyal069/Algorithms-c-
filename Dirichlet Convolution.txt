@@ -1,0 +1,200 @@
+//https://www.codechef.com/viewsolution/44723407
+
+#include <bits/stdc++.h>
+#define FAST ios_base::sync_with_stdio(false);cin.tie(NULL);cout.tie(NULL);
+typedef long long ll;
+typedef long double ld;
+#define pb push_back
+#define mp make_pair
+#define ff first
+#define ss second
+#define mod 998244353
+#define pii pair<ll,ll>
+#define inf 1000000000000000000
+#define bpc(x) __builtin_popcountll(x)
+#define autoit(x,it) for(auto it = x.begin(); it != x.end(); it++)
+#define autoitr(x,it) for(auto it = x.rbegin(); it != x.rend(); it++)
+#define rep(n) for(ll i = 0; i < n; i++)
+#define repi(i,n) for(ll i = 0; i < n; i++)
+#define hmap gp_hash_table<ll, ll>
+
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace __gnu_pbds;
+
+#define ordered_set tree<ll, null_type,less<ll>, rb_tree_tag,tree_order_statistics_node_update>
+
+using namespace std;
+mt19937_64 mt(chrono::steady_clock::now().time_since_epoch().count());
+
+vector<ll> mu, phi, primes, f;
+
+void calc(ll n)
+{
+    mu.resize(n + 1);
+    phi.resize(n + 1);
+    primes.clear();
+    vector<ll> nums(n + 1);
+    nums[1] = 1;
+
+    bool isp[n + 1];
+    rep(n + 1)
+    isp[i] = true;
+    isp[0] = isp[1] = false;
+    mu[1] = 1, phi[1] = 1;
+    for (ll i = 2; i <= n; i++)
+    {
+        if (isp[i])
+        {
+            phi[i] = i - 1;
+            primes.pb(i);
+            mu[i] = -1;
+            nums[i] = i;
+        }
+
+        ll tmp = n / i;
+
+        for (ll j = 0; j < primes.size() && primes[j] <= tmp; j++)
+        {
+            ll curr = primes[j] * i;
+            isp[curr] = false;
+            if (i % primes[j] == 0)
+            {
+                nums[curr] = nums[i] * primes[j];
+                phi[curr] = primes[j] * phi[i];
+                mu[curr] = 0;
+                break;
+            }
+
+            nums[curr] = primes[j];
+            mu[curr] = (mu[i] * mu[primes[j]]);
+            phi[curr] = (phi[i] * phi[primes[j]]);
+        }
+    }
+
+}
+
+ll gn;                                          //INITIALIZE THIS WITH n OF THE PROBLEM!!!!!!
+
+struct custom_hash {
+    static uint64_t splitmix64(uint64_t x) {
+        // http://xorshift.di.unimi.it/splitmix64.c
+        x += 0x9e3779b97f4a7c15;
+        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+        x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+        return x ^ (x >> 31);
+    }
+
+    size_t operator()(uint64_t x) const {
+        if (x != 0)
+            return gn / x;
+        static const uint64_t FIXED_RANDOM = chrono::steady_clock::now().time_since_epoch().count();
+        return splitmix64(x + FIXED_RANDOM);
+    }
+};
+
+
+const ll N = 3e7;
+ll phisum[N];                                     // N ~ (n)^(2/3)
+gp_hash_table<ll, ll, custom_hash> ma;
+
+ll get(ll n)
+{
+    if (n < N)
+        return phisum[n];                           //return precomputed value of Sf til (<=) n
+    auto it = ma.find(n);
+    if (it != ma.end())
+        return it->ss;
+    ll n1 = (n % mod);
+    ll tot = (n1 * (n1 + 1)) % mod;                   //prefix sum of (f*g) till (<=) n
+    tot *= ((mod + 1) / 2);
+    tot %= mod;
+    ll j;
+    for (j = 2; j * j <= n; j++)                    //sum from 2 to root(n), Sf(n/j)*g(j)
+    {
+        tot -= get(n / j) - mod;
+        while (tot >= mod)
+            tot -= mod;
+    }
+
+    tot /= 1;                                       //divide by g(1)
+
+    ll val = n / j;
+    while (val > 0)
+    {
+        ll l = n / (val + 1) + 1;
+        ll r = n / val;
+        r = min(r, n);
+        l = max(l, j);
+        if (l <= r)
+        {
+            ll cr = phisum[val];                //value of Sf(val)
+            cr *= 1;                            //multiply by Sg(r) - Sg(l-1)
+            cr %= mod;
+            cr = (cr * ((r - l + 1) % mod)) % mod;
+            tot -= (cr - mod);
+            while (tot >= mod)
+                tot -= mod;
+        }
+        val--;
+    }
+
+    return ma[n] = tot;
+}
+
+int main()
+{
+    FAST/**/
+
+    calc(N - 1);
+
+    phisum[0] = 0;
+    phi[0] = 0;
+    for (ll i = 1; i < N; i++)
+    {
+        phisum[i] = (phi[i] + phisum[i - 1]);
+        while (phisum[i] >= mod)
+            phisum[i] -= mod;
+    }
+
+    ll n = 1e11;
+    gn = n;
+
+    ll ans = 0;
+    ll i;
+    for (i = 1; i * i <= n; i++)
+    {
+        ll tmp = (n / i) % mod;
+        tmp = ((tmp * (tmp + 1))) % mod;
+        tmp *= ((mod + 1) / 2);
+        tmp %= mod;
+        ans += (phi[i] * tmp) % mod;
+        while (ans >= mod)
+            ans -= mod;
+    }
+
+    ll val = n / i;
+    while (val > 0)
+    {
+        ll l = n / (val + 1) + 1;
+        ll r = n / val;
+        r = min(r, n);
+        l = max(l, i);
+        if (l <= r)
+        {
+            ll tmp = (get(r) - get(l - 1) + mod) % mod;
+            tmp *= ((val * (val + 1))) % mod;
+            tmp %= mod;
+            tmp *= ((mod + 1) / 2);
+            tmp %= mod;
+            ans += tmp;
+            while (ans >= mod)
+                ans -= mod;
+        }
+        val--;
+    }
+    cout << ans << '\n';
+    return 0;
+}
+
+
